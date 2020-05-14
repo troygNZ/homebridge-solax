@@ -1,16 +1,16 @@
 {
   "private": true,
-  "displayName": "Plugin Name",
-  "name": "homebridge-plugin-name",
+  "displayName": "Homebridge - Solax Solar Inverter",
+  "name": "homebridge-solax",
   "version": "1.0.0",
-  "description": "A short description about what your plugin does.",
+  "description": "A Solax connector that (crudely) exposes the excess power as a thermostat.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "git://github.com/troygNZ/homebridge-solax.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/troygNZ/homebridge-solax/issues"
   },
   "engines": {
     "node": ">=10.17.0",
