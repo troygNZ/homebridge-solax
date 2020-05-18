@@ -2,6 +2,7 @@ import { CharacteristicEventTypes } from 'homebridge';
 import type { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback} from 'homebridge';
 
 import { ExampleHomebridgePlatform } from './platform';
+import {solaxService, getValuesAsync} from './solaxService';
 
 /**
  * Platform Accessory
@@ -10,6 +11,7 @@ import { ExampleHomebridgePlatform } from './platform';
  */
 export class ExamplePlatformAccessory {
   private service: Service;
+  private readonly solaxService: solaxService;
 
   /**
    * These are just used to create a working example
@@ -25,7 +27,7 @@ export class ExamplePlatformAccessory {
     private readonly platform: ExampleHomebridgePlatform,
     private readonly accessory: PlatformAccessory,
   ) {
-
+    this.solaxService = new solaxService();
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Solax')
@@ -62,15 +64,24 @@ export class ExamplePlatformAccessory {
     //
     // Here we change update the brightness to a random value every 5 seconds using 
     // the `updateCharacteristic` method.
-    setInterval(() => {
+    setInterval(async () => {
       // assign the current brightness a random value between 0 and 100
       const currentBrightness = Math.floor(Math.random() * 100);
 
       // push the new value to HomeKit
       this.service.updateCharacteristic(this.platform.Characteristic.Brightness, currentBrightness);
-
+      try {
+        const result = await getValuesAsync();
+        this.platform.log.debug("Power Gen: " + result.generationWatts);
+        this.platform.log.debug("Export: " + result.exportedWatts);
+      }
+      catch(error) {
+        this.platform.log.debug(`Failed to read from Solax. Error: ${error}`)
+      }
+      //this.solaxService.getValues();
+      //this.platform.log.debug('Read values from Solax');
       this.platform.log.debug('Pushed updated current Brightness state to HomeKit:', currentBrightness);
-    }, 10000);
+    }, 180000);
   }
 
   /**
