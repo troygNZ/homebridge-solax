@@ -33,14 +33,14 @@
     "node-fetch": "^2.6.0"
   },
   "devDependencies": {
-    "@types/node": "^13.13.4",
-    "@typescript-eslint/eslint-plugin": "^2.30.0",
-    "@typescript-eslint/parser": "^2.30.0",
+    "@types/node": "^13.13.6",
+    "@typescript-eslint/eslint-plugin": "^2.34.0",
+    "@typescript-eslint/parser": "^2.34.0",
     "eslint": "^6.8.0",
-    "homebridge": "^1.0.4",
-    "nodemon": "^2.0.3",
+    "homebridge": "^1.1.0",
+    "nodemon": "^2.0.4",
     "rimraf": "^3.0.2",
     "ts-node": "^8.10.1",
-    "typescript": "^3.8.3"
+    "typescript": "^3.9.2"
   }
 }
