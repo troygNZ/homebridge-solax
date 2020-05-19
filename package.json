@@ -30,7 +30,8 @@
     "@types/lodash": "^4.14.151",
     "@types/node-fetch": "^2.5.7",
     "lodash": "^4.17.15",
-    "node-fetch": "^2.6.0"
+    "node-fetch": "^2.6.0",
+    "sunrise-sunset-js": "^2.1.2"
   },
   "devDependencies": {
     "@types/node": "^13.13.6",

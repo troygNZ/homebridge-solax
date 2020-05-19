@@ -28,27 +28,6 @@ export const getValuesAsync = async (): Promise<InverterLiveMetrics> => {
     throw error;
   }
 };
-export class solaxService  {
-  getValues() {
-    fetch('http://192.168.1.40/api/realTimeData.htm')
-      .then(response => {
-        return response.text();
-      }).then(bodyText => {            
-        const cleansedResponse = bodyText.replace(/,,/g, ',0,').replace(/,,/g, ',0,');
-        const json = JSON.parse(cleansedResponse);
-        _.each( json.Data, ( dataItem, index: number ) => {
-          //console.log(`${index + 1} - ${dataItem}`);
-          if(index + 1=== 7) {
-            console.log(`PV Power (Watts) = ${dataItem}`);
-          } else if (index + 1 === 11) {
-            console.log(`Import/Export Power (Watts) = ${dataItem}`);
-          }
-        });
-        return json;
-      })
-      .catch(err => console.log(err));    
-  }
-}
 
 export interface InverterLiveMetrics {
     generationWatts: number;

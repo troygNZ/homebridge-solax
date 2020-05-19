@@ -1,9 +1,10 @@
 import { CharacteristicEventTypes } from 'homebridge';
 import util from 'util'
+import { getSunrise, getSunset } from 'sunrise-sunset-js'
 import type { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback} from 'homebridge';
 
-import { ExampleHomebridgePlatform } from './platform';
-import {solaxService, getValuesAsync} from './solaxService';
+import { SolaxPlatform } from './solaxPlatform';
+import { getValuesAsync } from './solaxService';
 
 /**
  * Platform Accessory
@@ -12,7 +13,6 @@ import {solaxService, getValuesAsync} from './solaxService';
  */
 export class ExamplePlatformAccessory {
   private service: Service;
-  private readonly solaxService: solaxService;
 
   /**
    * These are just used to create a working example
@@ -25,10 +25,9 @@ export class ExamplePlatformAccessory {
   }
 
   constructor(
-    private readonly platform: ExampleHomebridgePlatform,
+    private readonly platform: SolaxPlatform,
     private readonly accessory: PlatformAccessory,
   ) {
-    this.solaxService = new solaxService();
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Solax')
@@ -59,7 +58,6 @@ export class ExamplePlatformAccessory {
     this.service.getCharacteristic(this.platform.Characteristic.Brightness)
       .on(CharacteristicEventTypes.SET, this.setBrightness.bind(this));       // SET - bind to the 'setBrightness` method below
 
-
     this.pause(1000).then(() => this.getLatestReadingsPeriodically());
   }
 
@@ -78,7 +76,17 @@ export class ExamplePlatformAccessory {
     } catch(error) {
       this.platform.log.debug(`Failed to read from Solax. Error: ${error}`);
     }
-    this.pause(10000).then(() => this.getLatestReadingsPeriodically());
+
+    const sunrise = getSunrise(-37.804993, 175.132414);
+    const sunset = getSunset(-37.804993, 175.132414);
+    const now = new Date();
+    if(now > sunrise && now < sunset) {
+      this.pause(10000).then(() => this.getLatestReadingsPeriodically());
+    }
+    else {
+      this.pause(30000).then(() => this.getLatestReadingsPeriodically());
+    }
+    
   } 
   /**
    * Handle "SET" requests from HomeKit
