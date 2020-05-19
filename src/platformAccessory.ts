@@ -20,7 +20,7 @@ export class ExamplePlatformAccessory {
   private exampleStates = {
     On: false,
     Brightness: 100,
-    Temperature: 0
+    Temperature: 0,
   }
 
   constructor(
@@ -72,16 +72,15 @@ export class ExamplePlatformAccessory {
       this.service.updateCharacteristic(this.platform.Characteristic.Brightness, currentBrightness);
       try {
         const result = await getValuesAsync();
-        this.platform.log.debug("Power Gen: " + result.generationWatts);
-        this.platform.log.debug("Export: " + result.exportedWatts);
-      }
-      catch(error) {
-        this.platform.log.debug(`Failed to read from Solax. Error: ${error}`)
+        this.platform.log.debug('Power Gen: ' + result.generationWatts);
+        this.platform.log.debug('Export: ' + result.exportedWatts);
+      } catch(error) {
+        this.platform.log.debug(`Failed to read from Solax. Error: ${error}`);
       }
       //this.solaxService.getValues();
       //this.platform.log.debug('Read values from Solax');
       this.platform.log.debug('Pushed updated current Brightness state to HomeKit:', currentBrightness);
-    }, 180000);
+    }, 30000);
   }
 
   /**
