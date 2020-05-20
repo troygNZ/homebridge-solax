@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 export const getValuesAsync = async (): Promise<InverterLiveMetrics> => {
   try {
-
+    // TODO, shift in to config
     const response = await fetch('http://192.168.1.40/api/realTimeData.htm');
     const bodyText = await response.text();
             

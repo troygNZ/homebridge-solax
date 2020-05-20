@@ -1,6 +1,8 @@
 import { APIEvent } from 'homebridge';
 import type { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig } from 'homebridge';
-
+import util from 'util'
+import { getSunrise, getSunset } from 'sunrise-sunset-js'
+import { getValuesAsync } from './solaxService';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { ExamplePlatformAccessory } from './platformAccessory';
 
@@ -30,10 +32,57 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       log.debug('Executed didFinishLaunching callback');
       // run the method to discover / register your devices as accessories
-      this.discoverDevices();
+      //this.discoverDevices();
+      this.pause(this.determineDelayMillis()).then(() => this.getLatestReadingsPeriodically());
     });
   }
 
+  pause = util.promisify((a:any, f:any) => setTimeout(f, a))
+
+  async getLatestReadingsPeriodically()
+  {
+    // push the new value to HomeKit
+    //this.service.updateCharacteristic(this.platform.Characteristic.Brightness, currentBrightness);
+    try {
+      const result = await getValuesAsync();
+      this.log.debug('Power Gen: ' + result.generationWatts);
+      this.log.debug('Export: ' + result.exportedWatts);
+    } catch(error) {
+      this.log.debug(`Failed to read from Solax. Error: ${error}`);
+    }
+
+    this.pause(this.determineDelayMillis()).then(() => this.getLatestReadingsPeriodically());    
+  } 
+
+  determineDelayMillis() : number {
+
+      // TODO, shift coordinates in to config
+      const latitude = -37.804993;
+      const longitude = 175.132414;
+
+      const now = new Date();
+      // Note, this tool actually 
+      const sunrise = getSunrise(latitude, longitude);
+      const sunset = getSunset(latitude, longitude);
+
+      let delayMillis : number;
+      const forcePolling = true;
+      // If before dawn, then sleep till sunrise
+      if(!forcePolling && now < sunrise && now >= sunset) {
+        delayMillis = sunrise.getTime() - now.getTime();
+
+        this.log.debug(`Sunrise = ${sunrise}`);
+        this.log.debug(`Sunset = ${sunset}`);
+        this.log.debug(`Sleeping until sunrise (${sunrise} - {${+(delayMillis / 1000 / 60 / 60).toFixed(1)} hour(s)})`);
+      }
+      // If between sunrise and sunset, we're in the daylight hours, then normal polling
+      else {
+        // TODO, move this to a config item
+        delayMillis = 30000;
+      }
+
+      return delayMillis;
+  }
   /**
    * This function is invoked when homebridge restores cached accessories from disk at startup.
    * It should be used to setup event handlers for characteristics and update respective values.
@@ -59,24 +108,25 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
     // EXAMPLE ONLY
     // A real plugin you would discover accessories from the local network, cloud services
     // or a user-defined array in the platform config.
-    const exampleDevices = [
+    const inverterPsuedoDevices = [
       {
         exampleUniqueId: 'ABCD',
         exampleDisplayName: 'Solax Inverter',
-      }
+      },
     ];
 
     // loop over the discovered devices and register each one if it has not already been registered
-    for (const device of exampleDevices) {
+    for (const device of inverterPsuedoDevices) {
 
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
       const uuid = this.api.hap.uuid.generate(device.exampleUniqueId);
 
+      const existingEntry = this.accessories.find(accessory => accessory.UUID === uuid);
       // check that the device has not already been registered by checking the
       // cached devices we stored in the `configureAccessory` method above
-      if (!this.accessories.find(accessory => accessory.UUID === uuid)) {
+      if (!existingEntry) {
         this.log.info('Registering new accessory:', device.exampleDisplayName);
 
         // create a new accessory
@@ -90,15 +140,16 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
         // this is imported from `platformAccessory.ts`
         new ExamplePlatformAccessory(this, accessory);
 
-        // link the accessory to your platform
+        // // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 
-        // push into accessory cache
+        // // push into accessory cache
         this.accessories.push(accessory);
-
-        // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
-        // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       }
+      // else {
+      //   // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
+      //   this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingEntry]);
+      // }
     }
 
   }

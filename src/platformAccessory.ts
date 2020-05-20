@@ -1,10 +1,8 @@
 import { CharacteristicEventTypes } from 'homebridge';
-import util from 'util'
-import { getSunrise, getSunset } from 'sunrise-sunset-js'
+
 import type { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback} from 'homebridge';
 
 import { SolaxPlatform } from './solaxPlatform';
-import { getValuesAsync } from './solaxService';
 
 /**
  * Platform Accessory
@@ -58,36 +56,8 @@ export class ExamplePlatformAccessory {
     this.service.getCharacteristic(this.platform.Characteristic.Brightness)
       .on(CharacteristicEventTypes.SET, this.setBrightness.bind(this));       // SET - bind to the 'setBrightness` method below
 
-    this.pause(1000).then(() => this.getLatestReadingsPeriodically());
   }
 
- pause = util.promisify((a:any, f:any) => setTimeout(f, a))
-// pause(2000)
-// .then(() => console.log("done"))
-
-  async getLatestReadingsPeriodically()
-  {
-    // push the new value to HomeKit
-    //this.service.updateCharacteristic(this.platform.Characteristic.Brightness, currentBrightness);
-    try {
-      const result = await getValuesAsync();
-      this.platform.log.debug('Power Gen: ' + result.generationWatts);
-      this.platform.log.debug('Export: ' + result.exportedWatts);
-    } catch(error) {
-      this.platform.log.debug(`Failed to read from Solax. Error: ${error}`);
-    }
-
-    const sunrise = getSunrise(-37.804993, 175.132414);
-    const sunset = getSunset(-37.804993, 175.132414);
-    const now = new Date();
-    if(now > sunrise && now < sunset) {
-      this.pause(10000).then(() => this.getLatestReadingsPeriodically());
-    }
-    else {
-      this.pause(30000).then(() => this.getLatestReadingsPeriodically());
-    }
-    
-  } 
   /**
    * Handle "SET" requests from HomeKit
    * These are sent when the user changes the state of an accessory, for example, turning on a Light bulb.
