@@ -1,7 +1,8 @@
 import fetch from 'node-fetch';
 import _ from 'lodash';
+import { Logger } from 'homebridge/lib/logger';
 
-export const getValuesAsync = async (): Promise<InverterLiveMetrics> => {
+export const getValuesAsync = async (log: Logger): Promise<InverterLiveMetrics> => {
   try {
     // TODO, shift in to config
     const response = await fetch('http://192.168.1.40/api/realTimeData.htm');
@@ -24,7 +25,7 @@ export const getValuesAsync = async (): Promise<InverterLiveMetrics> => {
       exportedWatts: exportPower,
     };
   } catch (error) {
-    console.log(`That did not go well. Error: ${error}`);
+    log.debug(`That did not go well. Error: ${error}`);
     throw error;
   }
 };

@@ -43,7 +43,7 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
     // push the new value to HomeKit
     //this.service.updateCharacteristic(this.platform.Characteristic.Brightness, currentBrightness);
     try {
-      const result = await getValuesAsync();
+      const result = await getValuesAsync(this.log);
       this.log.debug('Power Gen: ' + result.generationWatts);
       this.log.debug('Export: ' + result.exportedWatts);
     } catch(error) {
@@ -67,8 +67,7 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
     let delayMillis: number;
     const forcePolling = true;
     // If before dawn, then sleep till sunrise
-    if(!forcePolling && now < sunrise && now >= sunset)
-    {
+    if(!forcePolling && now < sunrise && now >= sunset) {
       delayMillis = sunrise.getTime() - now.getTime();
       const asHours = +(delayMillis / 1000 / 60 / 60).toFixed(1);
       this.log.debug(`Sunrise = ${sunrise}`);
