@@ -1,7 +1,7 @@
 import { APIEvent } from 'homebridge';
 import type { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig } from 'homebridge';
-import util from 'util'
-import { getSunrise, getSunset } from 'sunrise-sunset-js'
+import util from 'util';
+import { getSunrise, getSunset } from 'sunrise-sunset-js';
 import { getValuesAsync } from './solaxService';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { ExamplePlatformAccessory } from './platformAccessory';
@@ -37,10 +37,9 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
     });
   }
 
-  pause = util.promisify((a:any, f:any) => setTimeout(f, a))
-
-  async getLatestReadingsPeriodically()
-  {
+  pause = util.promisify((a: any, f: any) => setTimeout(f, a))
+ 
+  async getLatestReadingsPeriodically() {
     // push the new value to HomeKit
     //this.service.updateCharacteristic(this.platform.Characteristic.Brightness, currentBrightness);
     try {
@@ -54,34 +53,34 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
     this.pause(this.determineDelayMillis()).then(() => this.getLatestReadingsPeriodically());    
   } 
 
-  determineDelayMillis() : number {
+  determineDelayMillis(): number {
 
-      // TODO, shift coordinates in to config
-      const latitude = -37.804993;
-      const longitude = 175.132414;
+    // TODO, shift coordinates in to config
+    const latitude = -37.804993;
+    const longitude = 175.132414;
 
-      const now = new Date();
-      // Note, this tool actually 
-      const sunrise = getSunrise(latitude, longitude);
-      const sunset = getSunset(latitude, longitude);
+    const now = new Date();
+    // Note, this tool actually 
+    const sunrise = getSunrise(latitude, longitude);
+    const sunset = getSunset(latitude, longitude);
 
-      let delayMillis : number;
-      const forcePolling = true;
-      // If before dawn, then sleep till sunrise
-      if(!forcePolling && now < sunrise && now >= sunset) {
-        delayMillis = sunrise.getTime() - now.getTime();
+    let delayMillis: number;
+    const forcePolling = true;
+    // If before dawn, then sleep till sunrise
+    if(!forcePolling && now < sunrise && now >= sunset) {
+      delayMillis = sunrise.getTime() - now.getTime();
 
-        this.log.debug(`Sunrise = ${sunrise}`);
-        this.log.debug(`Sunset = ${sunset}`);
-        this.log.debug(`Sleeping until sunrise (${sunrise} - {${+(delayMillis / 1000 / 60 / 60).toFixed(1)} hour(s)})`);
-      }
-      // If between sunrise and sunset, we're in the daylight hours, then normal polling
-      else {
-        // TODO, move this to a config item
-        delayMillis = 30000;
-      }
+      this.log.debug(`Sunrise = ${sunrise}`);
+      this.log.debug(`Sunset = ${sunset}`);
+      this.log.debug(`Sleeping until sunrise (${sunrise} - {${+(delayMillis / 1000 / 60 / 60).toFixed(1)} hour(s)})`);
+    }
+    // If between sunrise and sunset, we're in the daylight hours, then normal polling
+    else {
+      // TODO, move this to a config item
+      delayMillis = 30000;
+    }
 
-      return delayMillis;
+    return delayMillis;
   }
   /**
    * This function is invoked when homebridge restores cached accessories from disk at startup.
@@ -151,6 +150,5 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
       //   this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingEntry]);
       // }
     }
-
   }
 }
