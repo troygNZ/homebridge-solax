@@ -37,7 +37,7 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
     });
   }
 
-  pause = util.promisify((millis: number, f: any) => setTimeout(f, millis))
+  pause = util.promisify((millis: number, f: (...args: any[]) => void) => setTimeout(f, millis))
  
   async getLatestReadingsPeriodically() {
     // push the new value to HomeKit
