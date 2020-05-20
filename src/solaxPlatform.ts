@@ -4,8 +4,11 @@ import util from 'util';
 import { getSunrise, getSunset } from 'sunrise-sunset-js';
 import { getValuesAsync } from './solaxService';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { ExamplePlatformAccessory } from './platformAccessory';
+import { PsuedoSolaxAccessory } from './psuedoSolaxAccessory';
+import { EventEmitter } from 'events';
 
+class InverterStateEmitter extends EventEmitter {}
+  
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
@@ -14,9 +17,15 @@ import { ExamplePlatformAccessory } from './platformAccessory';
 export class SolaxPlatform implements DynamicPlatformPlugin {
   public readonly Service = this.api.hap.Service;
   public readonly Characteristic = this.api.hap.Characteristic;
+  public readonly inverterStateEmitter = new InverterStateEmitter();
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
+
+  public readonly inverterState = {
+    PowerGenerationWatts: 0,
+    ExportingWatts: 0,
+  }
 
   constructor(
     public readonly log: Logger,
@@ -32,7 +41,7 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       log.debug('Executed didFinishLaunching callback');
       // run the method to discover / register your devices as accessories
-      //this.discoverDevices();
+      this.setupDevices();
       this.pause(5000).then(() => this.getLatestReadingsPeriodically());
     });
   }
@@ -40,12 +49,17 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
   pause = util.promisify((millis: number, f: (...args: any[]) => void) => setTimeout(f, millis))
  
   async getLatestReadingsPeriodically() {
-    // push the new value to HomeKit
-    //this.service.updateCharacteristic(this.platform.Characteristic.Brightness, currentBrightness);
+
     try {
       const result = await getValuesAsync(this.log);
+      this.inverterState.ExportingWatts = result.exportedWatts;
+      this.inverterState.PowerGenerationWatts = result.generationWatts;
+
       this.log.debug('Power Gen: ' + result.generationWatts);
-      this.log.debug('Export: ' + result.exportedWatts);
+      this.log.debug('Export: ' + result.exportedWatts);    
+
+      this.inverterStateEmitter.emit('event');
+
     } catch(error) {
       this.log.debug(`Failed to read from Solax. Error: ${error}`);
     }
@@ -76,8 +90,8 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
     }
     // If between sunrise and sunset, we're in the daylight hours, then normal polling
     else {
-      // TODO, move this to a config item
-      delayMillis = 30000;
+      // TODO, maybe move this to a config item?
+      delayMillis = 5000;
     }
 
     return delayMillis;
@@ -91,7 +105,7 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
 
     // create the accessory handler
     // this is imported from `platformAccessory.ts`
-    new ExamplePlatformAccessory(this, accessory);
+    new PsuedoSolaxAccessory(this, accessory);
 
     // add the restored accessory to the accessories cache so we can track if it has already been registered
     this.accessories.push(accessory);
@@ -102,15 +116,15 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
    * Accessories must only be registered once, previously created accessories
    * must not be registered again to prevent "duplicate UUID" errors.
    */
-  discoverDevices() {
+  setupDevices() {
 
     // EXAMPLE ONLY
     // A real plugin you would discover accessories from the local network, cloud services
     // or a user-defined array in the platform config.
     const inverterPsuedoDevices = [
       {
-        exampleUniqueId: 'ABCD',
-        exampleDisplayName: 'Solax Inverter',
+        exampleUniqueId: 'exportAmount',
+        exampleDisplayName: 'Exported Watts',
       },
     ];
 
@@ -137,7 +151,7 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler
         // this is imported from `platformAccessory.ts`
-        new ExamplePlatformAccessory(this, accessory);
+        new PsuedoSolaxAccessory(this, accessory);
 
         // // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
@@ -145,10 +159,6 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
         // // push into accessory cache
         this.accessories.push(accessory);
       }
-      // else {
-      //   // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
-      //   this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingEntry]);
-      // }
     }
   }
 }
