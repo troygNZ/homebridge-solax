@@ -1,8 +1,6 @@
 import {
   AccessoryPlugin,
   CharacteristicGetCallback,
-  CharacteristicSetCallback,
-  CharacteristicValue,
   HAP,
   Logger,
   Service,
@@ -12,17 +10,10 @@ import { InverterStateEmitter } from './solaxPlatform';
 
 export class WattsReaderAccessory implements AccessoryPlugin {
 
-  private readonly log: Logger;
-
-  private switchOn = false;
-
-  // This property must be existent!!
-  name: string;
-
   private readonly service: Service;
   private readonly informationService: Service;
 
-  constructor(hap: HAP, log: Logger, name: string, public readonly inverterStateEmitter: InverterStateEmitter, public readonly getValue: () => number) {
+  constructor(private readonly hap: HAP, private readonly log: Logger, private readonly name: string, public readonly inverterStateEmitter: InverterStateEmitter, public readonly getValue: () => number) {
     this.log = log;
     this.name = name;
 
@@ -39,11 +30,6 @@ export class WattsReaderAccessory implements AccessoryPlugin {
         log.debug(`Updating value to ${value} for ${name}`)
         this.service.updateCharacteristic(hap.Characteristic.CurrentAmbientLightLevel, value);
       });
-    //   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-    //     this.switchOn = value as boolean;
-    //     log.info("Switch state was set to: " + (this.switchOn? "ON": "OFF"));
-    //     callback();
-    //   });
 
     this.informationService = new hap.Service.AccessoryInformation()
       .setCharacteristic(hap.Characteristic.Manufacturer, "Solax")
@@ -70,5 +56,4 @@ export class WattsReaderAccessory implements AccessoryPlugin {
       this.service,
     ];
   }
-
 }
