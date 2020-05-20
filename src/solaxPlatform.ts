@@ -33,11 +33,11 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
       log.debug('Executed didFinishLaunching callback');
       // run the method to discover / register your devices as accessories
       //this.discoverDevices();
-      this.pause(this.determineDelayMillis()).then(() => this.getLatestReadingsPeriodically());
+      this.pause(5000).then(() => this.getLatestReadingsPeriodically());
     });
   }
 
-  pause = util.promisify((a: any, f: any) => setTimeout(f, a))
+  pause = util.promisify((millis: number, f: any) => setTimeout(f, millis))
  
   async getLatestReadingsPeriodically() {
     // push the new value to HomeKit
@@ -67,12 +67,13 @@ export class SolaxPlatform implements DynamicPlatformPlugin {
     let delayMillis: number;
     const forcePolling = true;
     // If before dawn, then sleep till sunrise
-    if(!forcePolling && now < sunrise && now >= sunset) {
+    if(!forcePolling && now < sunrise && now >= sunset)
+    {
       delayMillis = sunrise.getTime() - now.getTime();
-
+      const asHours = +(delayMillis / 1000 / 60 / 60).toFixed(1);
       this.log.debug(`Sunrise = ${sunrise}`);
       this.log.debug(`Sunset = ${sunset}`);
-      this.log.debug(`Sleeping until sunrise (${sunrise} - {${+(delayMillis / 1000 / 60 / 60).toFixed(1)} hour(s)})`);
+      this.log.debug(`Sleeping until sunrise (${sunrise} - {${asHours} hour(s)})`);
     }
     // If between sunrise and sunset, we're in the daylight hours, then normal polling
     else {
