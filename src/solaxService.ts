@@ -1,13 +1,12 @@
 import fetch from 'node-fetch';
 import _ from 'lodash';
 import { Logger } from 'homebridge/lib/logger';
+import { Config } from './config';
 
-export const getValuesAsync = async (log: Logger): Promise<InverterLiveMetrics> => {
+export const getValuesAsync = async (log: Logger, config: Config): Promise<InverterLiveMetrics> => {
   try {
-    // TODO, shift in to config
-    const response = await fetch('http://192.168.1.40/api/realTimeData.htm');
+    const response = await fetch(`${config.address}/api/realTimeData.htm`);
     const bodyText = await response.text();
-    //log.debug(bodyText);
     const cleansedResponse = bodyText.replace(/,,/g, ',0,').replace(/,,/g, ',0,');
     const json = JSON.parse(cleansedResponse);
     let genPower = 0;
@@ -15,7 +14,6 @@ export const getValuesAsync = async (log: Logger): Promise<InverterLiveMetrics> 
             
     _.each( json.Data, ( dataItem, index: number ) => {
       if(index + 1=== 7) {
-        //log.debug(dataItem);
         genPower = parseInt(dataItem);
       } else if (index + 1 === 11) {
         exportPower = parseInt(dataItem);

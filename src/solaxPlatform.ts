@@ -3,6 +3,7 @@ import type { API, StaticPlatformPlugin, Logger, AccessoryPlugin, PlatformConfig
 import util from 'util';
 import { getSunrise, getSunset } from 'sunrise-sunset-js';
 import { getValuesAsync } from './solaxService';
+import { Config } from './config';
 import { WattsReadingAccessory } from './wattsReadingAccessory';
 import { EventEmitter } from 'events';
 
@@ -11,18 +12,24 @@ export class InverterStateEmitter extends EventEmitter {}
 export class SolaxPlatform implements StaticPlatformPlugin {
 
   public readonly inverterStateEmitter = new InverterStateEmitter();
+  public readonly config: Config;
   public readonly inverterState = {
     PowerGenerationWatts: 0,
     ExportingWatts: 0,
   }
   constructor(
     public readonly log: Logger,
-    public readonly config: PlatformConfig,
+    config: PlatformConfig,
     public readonly api: API) {
+
+    this.config = <Config> config;
 
     // probably parse config or something here
     this.log.debug('Finished initializing platform:', this.config.name);
-
+    
+    this.log.debug(`Solax Host: ${this.config.address}`);
+    this.log.debug(`Latitude: ${this.config.latitude}`);
+    this.log.debug(`Longitude: ${this.config.longitude}`);
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       log.debug('Executed didFinishLaunching callback');
       this.pause(5000).then(() => this.getLatestReadingsPeriodically());
@@ -33,7 +40,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
 
   async getLatestReadingsPeriodically() {
     try {
-      const result = await getValuesAsync(this.log);
+      const result = await getValuesAsync(this.log, this.config);
       this.inverterState.ExportingWatts = result.exportedWatts;
       this.inverterState.PowerGenerationWatts = result.generationWatts;
 
@@ -50,21 +57,18 @@ export class SolaxPlatform implements StaticPlatformPlugin {
   } 
 
   determineDelayMillis(): number {
-    // TODO, shift coordinates in to config
-    const latitude = -37.804993;
-    const longitude = 175.132414;
 
     const now = new Date();
     // Note, this tool actually 
-    const sunrise = getSunrise(latitude, longitude);
-    const sunset = getSunset(latitude, longitude);
+    const sunrise = getSunrise(this.config.latitude ?? 0, this.config.longitude ?? 0);
+    const sunset = getSunset(this.config.latitude ?? 0, this.config.longitude ?? 0);
 
     let delayMillis: number;
     // If before dawn, then sleep till sunrise
     if(now < sunrise && now >= sunset) {
 
       this.log.debug(`Reduced polling due to being outside of daylight hours. Sunrise = ${sunrise}, Sunset = ${sunset}`);
-      delayMillis = 60000 * 1;
+      delayMillis = 60000 * 5;
     }
     // If between sunrise and sunset, we're in the daylight hours, then normal polling
     else {
