@@ -39,8 +39,8 @@ export class WattsReaderAccessory implements AccessoryPlugin {
     });
 
     this.informationService = new hap.Service.AccessoryInformation()
-      .setCharacteristic(hap.Characteristic.Manufacturer, "Solax")
-      .setCharacteristic(hap.Characteristic.Model, "Inverter");
+      .setCharacteristic(hap.Characteristic.Manufacturer, 'Solax')
+      .setCharacteristic(hap.Characteristic.Model, 'Inverter');
 
     log.info(`Solax watts reader for ${name} created!`);
   }
@@ -50,7 +50,7 @@ export class WattsReaderAccessory implements AccessoryPlugin {
    * Typical this only ever happens at the pairing process.
    */
   identify(): void {
-    this.log.debug("Identify!");
+    this.log.debug('Identify!');
   }
 
   /*
