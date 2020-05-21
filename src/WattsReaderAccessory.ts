@@ -4,8 +4,8 @@ import {
   HAP,
   Logger,
   Service,
-  CharacteristicEventTypes
-} from "homebridge";
+  CharacteristicEventTypes,
+} from 'homebridge';
 import { InverterStateEmitter } from './solaxPlatform';
 
 export class WattsReaderAccessory implements AccessoryPlugin {
@@ -13,7 +13,12 @@ export class WattsReaderAccessory implements AccessoryPlugin {
   private readonly service: Service;
   private readonly informationService: Service;
 
-  constructor(private readonly hap: HAP, private readonly log: Logger, private readonly name: string, public readonly inverterStateEmitter: InverterStateEmitter, public readonly getValue: () => number) {
+  constructor(
+    private readonly hap: HAP,
+    private readonly log: Logger,
+    private readonly name: string,
+    private readonly inverterStateEmitter: InverterStateEmitter,
+    private readonly getValue: () => number) {
     this.log = log;
     this.name = name;
 
@@ -25,13 +30,13 @@ export class WattsReaderAccessory implements AccessoryPlugin {
         callback(undefined, sanitisedValue);
       })
 
-      inverterStateEmitter.on('event', () => {
-        // push the new value to HomeKit
-        const sanitisedValue = Math.max(0.1 ,getValue());
+    inverterStateEmitter.on('event', () => {
+      // push the new value to HomeKit
+      const sanitisedValue = Math.max(0.1 ,getValue());
 
-        log.debug(`Updating value to ${sanitisedValue} for ${name}`)
-        this.service.updateCharacteristic(hap.Characteristic.CurrentAmbientLightLevel, sanitisedValue);
-      });
+      log.debug(`Updating value to ${sanitisedValue} for ${name}`);
+      this.service.updateCharacteristic(hap.Characteristic.CurrentAmbientLightLevel, sanitisedValue);
+    });
 
     this.informationService = new hap.Service.AccessoryInformation()
       .setCharacteristic(hap.Characteristic.Manufacturer, "Solax")
