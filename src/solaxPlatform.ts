@@ -15,15 +15,18 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     PowerGenerationWatts: 0,
     ExportingWatts: 0,
   }
-  constructor(public readonly log: Logger, public readonly config: PlatformConfig, public readonly api: API) {
+  constructor(
+    public readonly log: Logger,
+    public readonly config: PlatformConfig,
+    public readonly api: API) {
 
     // probably parse config or something here
-     this.log.debug('Finished initializing platform:', this.config.name);
+    this.log.debug('Finished initializing platform:', this.config.name);
 
-     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
-       log.debug('Executed didFinishLaunching callback');
-       this.pause(5000).then(() => this.getLatestReadingsPeriodically());
-     });
+    this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
+      log.debug('Executed didFinishLaunching callback');
+      this.pause(5000).then(() => this.getLatestReadingsPeriodically());
+    });
   }
 
   pause = util.promisify((millis: number, f: (...args: any[]) => void) => setTimeout(f, millis));
