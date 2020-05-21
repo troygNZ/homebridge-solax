@@ -13,9 +13,11 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
     let exportPower = 0;
             
     _.each( json.Data, ( dataItem, index: number ) => {
-      if(index + 1=== 7) {
+      // Lookup index data provided starts at 1 :|
+      const lookupIndex = index + 1;
+      if(lookupIndex === LiveDatastreamFields.GridPower as number) {
         genPower = parseInt(dataItem);
-      } else if (index + 1 === 11) {
+      } else if (lookupIndex === LiveDatastreamFields.FeedInPower as number) {
         exportPower = parseInt(dataItem);
       }
     });
@@ -32,4 +34,34 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
 export interface InverterLiveMetrics {
     generationWatts: number;
     exportedWatts: number;
-}   
+} 
+
+enum LiveDatastreamFields {
+  PV1Current = 1,
+  PV2Current = 2,
+  PV1Voltage = 3,
+  PV2Voltage = 4,
+  GridCurrent = 5,
+  GridVoltage = 6,
+  GridPower = 7,
+  InnerTemp = 8,
+  SolarToday = 9,
+  SolarTotal = 10,
+  FeedInPower = 11,
+  PV1Power = 12,
+  PV2Power = 13,
+  BatteryVoltage = 14,
+  BatteryCurrent = 15,
+  BatteryPower = 16,
+  BatteryTemp = 17,
+  BatteryCapacity = 19,
+  SolarTotal2 = 20,
+  EnergyToGrid = 42,
+  EnergyFromGrid = 43,
+  GridFrequency = 51,
+  EPSVoltage = 54,
+  EPSCurrent = 55,
+  EPSVA = 56,
+  EPSFrequency = 57,
+  Status = 69,
+}
