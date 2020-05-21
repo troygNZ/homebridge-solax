@@ -3,7 +3,7 @@ import type { API, StaticPlatformPlugin, Logger, AccessoryPlugin, PlatformConfig
 import util from 'util';
 import { getSunrise, getSunset } from 'sunrise-sunset-js';
 import { getValuesAsync } from './solaxService';
-import { WattsReaderAccessory } from './wattsReaderAccessory';
+import { WattsReadingAccessory } from './wattsReadingAccessory';
 import { EventEmitter } from 'events';
 
 export class InverterStateEmitter extends EventEmitter {}
@@ -79,13 +79,13 @@ export class SolaxPlatform implements StaticPlatformPlugin {
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
     callback([
 
-      new WattsReaderAccessory(this.api.hap, this.log, "Exported Watts", this.inverterStateEmitter, () => {
+      new WattsReadingAccessory(this.api.hap, this.log, "Exported Watts", this.inverterStateEmitter, () => {
         return this.inverterState.ExportingWatts >= 0 ? this.inverterState.ExportingWatts : 0;
       }),
-      new WattsReaderAccessory(this.api.hap, this.log, "Imported Watts", this.inverterStateEmitter, () => {
+      new WattsReadingAccessory(this.api.hap, this.log, "Imported Watts", this.inverterStateEmitter, () => {
         return this.inverterState.ExportingWatts < 0 ? Math.abs(this.inverterState.ExportingWatts) : 0;
       }),
-      new WattsReaderAccessory(this.api.hap, this.log, "Power Generation Watts", this.inverterStateEmitter, () => {
+      new WattsReadingAccessory(this.api.hap, this.log, "Power Generation Watts", this.inverterStateEmitter, () => {
         return this.inverterState.PowerGenerationWatts;
       }),
     ]);

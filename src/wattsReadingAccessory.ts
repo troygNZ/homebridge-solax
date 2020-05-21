@@ -8,7 +8,7 @@ import {
 } from 'homebridge';
 import { InverterStateEmitter } from './solaxPlatform';
 
-export class WattsReaderAccessory implements AccessoryPlugin {
+export class WattsReadingAccessory implements AccessoryPlugin {
 
   private readonly service: Service;
   private readonly informationService: Service;
