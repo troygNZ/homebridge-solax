@@ -20,15 +20,17 @@ export class WattsReaderAccessory implements AccessoryPlugin {
     this.service = new hap.Service.LightSensor(name);
     this.service.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel)
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-        log.info(`Current state of the light sensor was returned: ${getValue()}`);
-        callback(undefined, getValue());
+        const sanitisedValue = Math.max(0.1 ,getValue());
+        log.info(`Current state of the light sensor was returned: ${sanitisedValue}`);
+        callback(undefined, sanitisedValue);
       })
 
       inverterStateEmitter.on('event', () => {
         // push the new value to HomeKit
-        const value = getValue()
-        log.debug(`Updating value to ${value} for ${name}`)
-        this.service.updateCharacteristic(hap.Characteristic.CurrentAmbientLightLevel, value);
+        const sanitisedValue = Math.max(0.1 ,getValue());
+
+        log.debug(`Updating value to ${sanitisedValue} for ${name}`)
+        this.service.updateCharacteristic(hap.Characteristic.CurrentAmbientLightLevel, sanitisedValue);
       });
 
     this.informationService = new hap.Service.AccessoryInformation()
