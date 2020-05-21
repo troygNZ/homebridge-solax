@@ -22,7 +22,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     config: PlatformConfig,
     public readonly api: API) {
 
-    this.config = <Config> config;
+    this.config = config as Config;
 
     // probably parse config or something here
     this.log.debug('Finished initializing platform:', this.config.name);
@@ -69,9 +69,8 @@ export class SolaxPlatform implements StaticPlatformPlugin {
 
       this.log.debug(`Reduced polling due to being outside of daylight hours. Sunrise = ${sunrise}, Sunset = ${sunset}`);
       delayMillis = 60000 * 5;
-    }
-    // If between sunrise and sunset, we're in the daylight hours, then normal polling
-    else {
+    }    
+    else { // If between sunrise and sunset, we're in the daylight hours, then normal polling
       delayMillis = 30000;
     }
 
@@ -86,13 +85,15 @@ export class SolaxPlatform implements StaticPlatformPlugin {
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
     callback([
 
-      new WattsReadingAccessory(this.api.hap, this.log, "Exported Watts", this.inverterStateEmitter, () => {
+      new WattsReadingAccessory(this.api.hap, this.log, 'Exported Watts', this.inverterStateEmitter, () => {
         return this.inverterState.ExportingWatts >= 0 ? this.inverterState.ExportingWatts : 0;
       }),
-      new WattsReadingAccessory(this.api.hap, this.log, "Imported Watts", this.inverterStateEmitter, () => {
+
+      new WattsReadingAccessory(this.api.hap, this.log, 'Imported Watts', this.inverterStateEmitter, () => {
         return this.inverterState.ExportingWatts < 0 ? Math.abs(this.inverterState.ExportingWatts) : 0;
       }),
-      new WattsReadingAccessory(this.api.hap, this.log, "Power Generation Watts", this.inverterStateEmitter, () => {
+
+      new WattsReadingAccessory(this.api.hap, this.log, 'Power Gen Watts', this.inverterStateEmitter, () => {
         return this.inverterState.PowerGenerationWatts;
       }),
     ]);

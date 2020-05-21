@@ -28,7 +28,7 @@ export class WattsReadingAccessory implements AccessoryPlugin {
         const sanitisedValue = Math.max(0.1 ,getValue());
         log.info(`Current state of the light sensor was returned: ${sanitisedValue}`);
         callback(undefined, sanitisedValue);
-      })
+      });
 
     inverterStateEmitter.on('event', () => {
       // push the new value to HomeKit
