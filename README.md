@@ -33,10 +33,12 @@ npm install homebridge-solax
       }
     ]
 ```
+**address**: The base hostname of your inverter connection dongle
 
-`address`: The base hostname of your inverter connection dongle
-`latitude`: Optional: Specifies the latitude of your solar installation. Used to determining accurate Sunset and Sunrise times.
-`longitude`: Optional: Specifies the longitude of your solar installation. Used to determining accurate Sunset and Sunrise times.
+**latitude**: *Optional*: Specifies the latitude of your solar installation. Used to determining accurate Sunset and Sunrise times.
 
-### Leveraging in Automations
+**longitude**: *Optional*: Specifies the longitude of your solar installation. Used to determining accurate Sunset and Sunrise times.
+
+
+### Leveraging in Automations via Motion Sensor Accessories
 TBD
