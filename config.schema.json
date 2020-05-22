@@ -9,7 +9,32 @@
         "title": "Name",
         "type": "string",
         "required": true,
-        "default": "Example Dynamic Platform"
+        "default": "Solax Inverter"
+      },
+      "address": {
+        "title": "Inverter Address",
+        "type": "string",
+        "required": true,
+        "format": "hostname",
+        "default": ""
+      },
+      "latitude": {
+        "title": "Latitude of the installation, used to calculate Sunrise and Sunet",
+        "type": "number",
+        "default": 0.0,
+        "maximum": 90,
+        "minimum": -90,
+        "required": false,
+        "description": "Defaults to 0"
+      },
+      "longitude": {
+        "title": "Longitude of the installation, used to calculate Sunrise and Sunet",
+        "type": "number",
+        "default": 0.0,
+        "maximum": 180,
+        "minimum": -180,
+        "required": false,
+        "description": "Defaults to 0"
       }
     }
   }
