@@ -3,7 +3,7 @@ import type { API, StaticPlatformPlugin, Logger, AccessoryPlugin, PlatformConfig
 import util from 'util';
 import { getSunrise, getSunset } from 'sunrise-sunset-js';
 import { getValuesAsync } from './solaxService';
-import { Config } from './config';
+import Config from './config';
 import { WattsReadingAccessory } from './wattsReadingAccessory';
 import { EventEmitter } from 'events';
 
@@ -23,13 +23,15 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     public readonly api: API) {
 
     this.config = config as Config;
-
-    // probably parse config or something here
-    this.log.debug('Finished initializing platform:', this.config.name);
-    
     this.log.debug(`Solax Host: ${this.config.address}`);
     this.log.debug(`Latitude: ${this.config.latitude}`);
     this.log.debug(`Longitude: ${this.config.longitude}`);
+    if(! this.config.latitude || !this.config.longitude) {
+      this.log.warn("Ideally longtitude and latitude values should be provided in order to provide accurate sunset and sunrise timings.");
+    }
+
+    this.log.debug('Finished initializing platform:', this.config.name);
+    
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       log.debug('Executed didFinishLaunching callback');
       this.pause(5000).then(() => this.getLatestReadingsPeriodically());
@@ -59,7 +61,6 @@ export class SolaxPlatform implements StaticPlatformPlugin {
   determineDelayMillis(): number {
 
     const now = new Date();
-    // Note, this tool actually 
     const sunrise = getSunrise(this.config.latitude ?? 0, this.config.longitude ?? 0);
     const sunset = getSunset(this.config.latitude ?? 0, this.config.longitude ?? 0);
 

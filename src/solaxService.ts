@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import _ from 'lodash';
 import { Logger } from 'homebridge/lib/logger';
-import { Config } from './config';
+import Config from './config';
 
 enum LiveDatastreamFields {
   PV1Current = 1,

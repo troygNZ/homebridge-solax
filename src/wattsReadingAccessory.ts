@@ -19,22 +19,22 @@ export class WattsReadingAccessory implements AccessoryPlugin {
     private readonly name: string,
     private readonly inverterStateEmitter: InverterStateEmitter,
     private readonly getValue: () => number) {
-    this.log = log;
-    this.name = name;
 
     this.service = new hap.Service.LightSensor(name);
     this.service.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel)
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        // Minimum value allowed for light sensor is 0.1
         const sanitisedValue = Math.max(0.1 ,getValue());
         log.info(`Current state of the light sensor was returned: ${sanitisedValue}`);
         callback(undefined, sanitisedValue);
       });
 
     inverterStateEmitter.on('event', () => {
-      // push the new value to HomeKit
+      // Minimum value allowed for light sensor is 0.1
       const sanitisedValue = Math.max(0.1 ,getValue());
 
       log.debug(`Updating value to ${sanitisedValue} for ${name}`);
+      // push the new value to HomeKit
       this.service.updateCharacteristic(hap.Characteristic.CurrentAmbientLightLevel, sanitisedValue);
     });
 
