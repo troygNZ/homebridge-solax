@@ -4,8 +4,10 @@ import util from 'util';
 import { getSunrise, getSunset } from 'sunrise-sunset-js';
 import { getValuesAsync } from './solaxService';
 import Config from './config';
-import { WattsReadingAccessory } from './wattsReadingAccessory';
+import WattsReadingAccessory from './wattsReadingAccessory';
+import PowerThresholdMotionSensor from './powerThresholdMotionSensor';
 import { EventEmitter } from 'events';
+import _ from 'lodash';
 
 export class InverterStateEmitter extends EventEmitter {}
 
@@ -22,10 +24,14 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     config: PlatformConfig,
     public readonly api: API) {
 
+    this.inverterStateEmitter.setMaxListeners(15);
+    this.log.debug(`Config: \n${JSON.stringify(config, null, "  ")}`);
     this.config = config as Config;
-    this.log.debug(`Solax Host: ${this.config.address}`);
-    this.log.debug(`Latitude: ${this.config.latitude}`);
-    this.log.debug(`Longitude: ${this.config.longitude}`);
+    this.log.info(`Solax Host: ${this.config.address}`);
+    this.log.info(`Latitude: ${this.config.latitude}`);
+    this.log.info(`Longitude: ${this.config.longitude}`);
+    this.log.debug(`Raw thresholds = ${this.config.exportAlertThresholds}`);
+    this.log.info(`Export Alert Thresholds: [${this.config.exportAlertThresholds ? this.config.exportAlertThresholds.join(",") : [] }]`);
     if(! this.config.latitude || !this.config.longitude) {
       this.log.warn("Ideally longtitude and latitude values should be provided in order to provide accurate sunset and sunrise timings.");
     }
@@ -34,12 +40,11 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       log.debug('Executed didFinishLaunching callback');
-      this.pause(5000).then(() => this.getLatestReadingsPeriodically());
+      this.sleep(5000).then(async () => await this.getLatestReadingsPeriodically());
     });
   }
 
-  pause = util.promisify((millis: number, f: (...args: any[]) => void) => setTimeout(f, millis));
-
+  sleep = util.promisify(setTimeout);
   async getLatestReadingsPeriodically() {
     try {
       const result = await getValuesAsync(this.log, this.config);
@@ -54,8 +59,10 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     } catch(error) {
       this.log.debug(`Failed to read from Solax. Error: ${error}`);
     }
-
-    this.pause(this.determineDelayMillis()).then(() => this.getLatestReadingsPeriodically());    
+    
+    const delay = this.determineDelayMillis();
+    this.log.debug(`Delaying for ${delay} milliseconds.`);
+    this.sleep(delay).then(async () => await this.getLatestReadingsPeriodically()); 
   } 
 
   determineDelayMillis(): number {
@@ -69,7 +76,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     if(now < sunrise && now >= sunset) {
 
       this.log.debug(`Reduced polling due to being outside of daylight hours. Sunrise = ${sunrise}, Sunset = ${sunset}`);
-      delayMillis = 60000 * 5;
+      delayMillis = 60000 * 1;
     }    
     else { // If between sunrise and sunset, we're in the daylight hours, then normal polling
       delayMillis = 30000;
@@ -84,8 +91,8 @@ export class SolaxPlatform implements StaticPlatformPlugin {
    * The set of exposed accessories CANNOT change over the lifetime of the plugin!
    */
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
-    callback([
-
+    const exportAlertThresholds = this.config.exportAlertThresholds ? this.config.exportAlertThresholds : [];
+    const accessories: AccessoryPlugin[] = [
       new WattsReadingAccessory(this.api.hap, this.log, 'Exported Watts', this.inverterStateEmitter, () => {
         return this.inverterState.ExportingWatts >= 0 ? this.inverterState.ExportingWatts : 0;
       }),
@@ -97,7 +104,16 @@ export class SolaxPlatform implements StaticPlatformPlugin {
       new WattsReadingAccessory(this.api.hap, this.log, 'Power Gen Watts', this.inverterStateEmitter, () => {
         return this.inverterState.PowerGenerationWatts;
       }),
-    ]);
-  }
+    ];
 
+    const exportAlarms = _.map(exportAlertThresholds, threshold =>
+      new PowerThresholdMotionSensor(
+        this.api.hap,
+        this.log,
+        `${threshold} watts exported`,
+        this.inverterStateEmitter,
+        () => this.inverterState.ExportingWatts > threshold));
+
+    return callback(accessories.concat(exportAlarms));
+  }
 } 

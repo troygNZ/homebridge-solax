@@ -4,7 +4,8 @@
       "platform" : "SolaxHomebridgePlugin",
       "name" : "Solax Inverter",
       "latitude": 45.804993,
-      "longitude": 175.132414 
+      "longitude": 175.132414,
+      "exportAlertThresholds": [0, 1000, 1500]
     }
   ]
 }
