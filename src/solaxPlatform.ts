@@ -30,7 +30,6 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     this.log.info(`Solax Host: ${this.config.address}`);
     this.log.info(`Latitude: ${this.config.latitude}`);
     this.log.info(`Longitude: ${this.config.longitude}`);
-    this.log.debug(`Raw thresholds = ${this.config.exportAlertThresholds}`);
     this.log.info(`Export Alert Thresholds: [${this.config.exportAlertThresholds ? this.config.exportAlertThresholds.join(",") : [] }]`);
     if(! this.config.latitude || !this.config.longitude) {
       this.log.warn("Ideally longtitude and latitude values should be provided in order to provide accurate sunset and sunrise timings.");
