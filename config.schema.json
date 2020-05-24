@@ -43,7 +43,7 @@
         "description": "",
         "items": {
           "title": "Threshold to trigger the alert",
-          "type": "number"
+          "type": "integer"
         }
       }
     }

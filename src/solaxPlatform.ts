@@ -112,7 +112,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
         this.log,
         `${threshold} watts exported`,
         this.inverterStateEmitter,
-        () => this.inverterState.ExportingWatts > threshold));
+        () => this.inverterState.ExportingWatts >= threshold));
 
     return callback(accessories.concat(exportAlarms));
   }
