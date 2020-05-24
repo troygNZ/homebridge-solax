@@ -28,7 +28,7 @@ npm install homebridge-solax
         "platform" : "SolaxHomebridgePlugin",
         "name" : "Solax Inverter",
         "address": "http://192.168.1.40",
-        "latitude": -37.804993,
+        "latitude": -36.804993,
         "longitude": 175.132414 
       }
     ]
