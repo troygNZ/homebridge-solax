@@ -45,6 +45,7 @@ export default class PowerThresholdMotionSensor implements AccessoryPlugin {
     this.log.debug('Triggered GET MotionDetected');
     callback(null, this.shouldTrigger());
   }
+  
   /*
    * This method is optional to implement. It is called when HomeKit ask to identify the accessory.
    * Typical this only ever happens at the pairing process.

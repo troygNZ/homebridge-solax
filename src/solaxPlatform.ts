@@ -19,20 +19,21 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     PowerGenerationWatts: 0,
     ExportingWatts: 0,
   }
+
   constructor(
     public readonly log: Logger,
     config: PlatformConfig,
     public readonly api: API) {
 
     this.inverterStateEmitter.setMaxListeners(15);
-    this.log.debug(`Config: \n${JSON.stringify(config, null, "  ")}`);
+    this.log.debug(`Config: \n${JSON.stringify(config, null, '  ')}`);
     this.config = config as Config;
     this.log.info(`Solax Host: ${this.config.address}`);
     this.log.info(`Latitude: ${this.config.latitude}`);
     this.log.info(`Longitude: ${this.config.longitude}`);
-    this.log.info(`Export Alert Thresholds: [${this.config.exportAlertThresholds ? this.config.exportAlertThresholds.join(",") : [] }]`);
+    this.log.info(`Export Alert Thresholds: [${this.config.exportAlertThresholds ? this.config.exportAlertThresholds.join(',') : [] }]`);
     if(! this.config.latitude || !this.config.longitude) {
-      this.log.warn("Ideally longtitude and latitude values should be provided in order to provide accurate sunset and sunrise timings.");
+      this.log.warn('Ideally longtitude and latitude values should be provided in order to provide accurate sunset and sunrise timings.');
     }
 
     this.log.debug('Finished initializing platform:', this.config.name);
@@ -76,13 +77,14 @@ export class SolaxPlatform implements StaticPlatformPlugin {
 
       this.log.debug(`Reduced polling due to being outside of daylight hours. Sunrise = ${sunrise}, Sunset = ${sunset}`);
       delayMillis = 60000 * 1;
-    }    
+    }
     else { // If between sunrise and sunset, we're in the daylight hours, then normal polling
       delayMillis = 30000;
     }
 
     return delayMillis;
   }
+
   /*
    * This method is called to retrieve all accessories exposed by the platform.
    * The Platform can delay the response my invoking the callback at a later time,
