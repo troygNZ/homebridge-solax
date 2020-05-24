@@ -20,9 +20,9 @@ export default class PowerThresholdMotionSensor implements AccessoryPlugin {
 
     this.service = new hap.Service.MotionSensor(name);
     this.service.name = name;
-         // create handlers for required characteristics
+    // create handlers for required characteristics
     this.service.getCharacteristic(hap.Characteristic.MotionDetected)
-         .on('get', this.handleMotionDetectedGet.bind(this));
+      .on('get', this.handleMotionDetectedGet.bind(this));
 
     inverterStateEmitter.on('event', () => {
       // push the new value to HomeKit
