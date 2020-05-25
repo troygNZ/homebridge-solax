@@ -1,0 +1,6 @@
+{
+  "singleQuote": false,
+  "eslintIntegration": true,
+  "printWidth": 140,
+  "trailingComma": "es5"
+}
