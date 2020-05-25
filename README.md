@@ -6,9 +6,13 @@
 </p>
 
 
+
 # Homebridge-Solax Platform Plugin
 
 Use this plugin to monitor your Solax Inverter - to get realtime metrics from your inverter. Inspired by the Solax connector for Home Assistant.
+
+![Example Homekit Page](IMG_0931.PNG)
+
 
 Requires the installation of the Solax Monitoring Dongle, and usage of a static IP address on your LAN. Refer to your Router configuration guide on how to do this.
 
