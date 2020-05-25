@@ -111,11 +111,13 @@ export class SolaxPlatform implements StaticPlatformPlugin {
       let name: string;
       let evalutation: () => boolean;
 
-      if(threshold < 0) {
+      if(threshold < 0)
+      {
         name = `${threshold} watts imported`;
         evalutation = () => this.inverterState.ExportingWatts <= threshold;
       }
-      else {
+      else
+      {
         name = `${threshold} watts exported`;
         evalutation = () => this.inverterState.ExportingWatts >= threshold;
       }
