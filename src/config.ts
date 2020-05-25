@@ -4,4 +4,5 @@ export default interface Config extends PlatformConfig {
     address: string;
     latitude?: number;
     longitude?: number;
+    exportAlertThresholds?: number[];
 }

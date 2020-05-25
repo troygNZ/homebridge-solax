@@ -1,14 +1,12 @@
 import {
   AccessoryPlugin,
-  CharacteristicGetCallback,
   HAP,
   Logger,
   Service,
-  CharacteristicEventTypes,
 } from 'homebridge';
 import { InverterStateEmitter } from './solaxPlatform';
 
-export default class WattsReadingAccessory implements AccessoryPlugin {
+export default class PowerThresholdMotionSensor implements AccessoryPlugin {
 
   private readonly service: Service;
   private readonly informationService: Service;
@@ -18,24 +16,22 @@ export default class WattsReadingAccessory implements AccessoryPlugin {
     private readonly log: Logger,
     private readonly name: string,
     private readonly inverterStateEmitter: InverterStateEmitter,
-    private readonly getValue: () => number) {
+    private readonly shouldTrigger: () => boolean) {
 
-    this.service = new hap.Service.LightSensor(name);
-    this.service.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel)
-      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-        // Minimum value allowed for light sensor is 0.1
-        const sanitisedValue = Math.max(0.1 ,getValue());
-        log.info(`Current state of the light sensor was returned: ${sanitisedValue}`);
-        callback(undefined, sanitisedValue);
-      });
+    this.service = new hap.Service.MotionSensor(name);
+    this.service.name = name;
+    // create handlers for required characteristics
+    this.service.getCharacteristic(hap.Characteristic.MotionDetected)
+      .on('get', this.handleMotionDetectedGet.bind(this));
 
     inverterStateEmitter.on('event', () => {
-      // Minimum value allowed for light sensor is 0.1
-      const sanitisedValue = Math.max(0.1 ,getValue());
-
-      log.debug(`Updating value to ${sanitisedValue} for ${name}`);
       // push the new value to HomeKit
-      this.service.updateCharacteristic(hap.Characteristic.CurrentAmbientLightLevel, sanitisedValue);
+      const triggered = this.shouldTrigger();
+      if(triggered) {
+        this.log.debug(`${this.name} - shouldTrigger() = ${triggered}`);
+      }
+
+      this.service.updateCharacteristic(hap.Characteristic.MotionDetected, triggered);
     });
 
     this.informationService = new hap.Service.AccessoryInformation()
@@ -45,6 +41,11 @@ export default class WattsReadingAccessory implements AccessoryPlugin {
     log.info(`Solax watts reader for ${name} created!`);
   }
 
+  handleMotionDetectedGet = (callback: any): void => {
+    this.log.debug('Triggered GET MotionDetected');
+    callback(null, this.shouldTrigger());
+  }
+  
   /*
    * This method is optional to implement. It is called when HomeKit ask to identify the accessory.
    * Typical this only ever happens at the pairing process.

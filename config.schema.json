@@ -35,6 +35,16 @@
         "minimum": -180,
         "required": false,
         "description": "Defaults to 0"
+      },
+      "exportAlertThresholds": {
+        "title": "Export Alert Thresholds",
+        "type": "array",
+        "required": false,
+        "description": "",
+        "items": {
+          "title": "Threshold to trigger the alert",
+          "type": "integer"
+        }
       }
     }
   }
