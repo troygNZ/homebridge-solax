@@ -107,13 +107,26 @@ export class SolaxPlatform implements StaticPlatformPlugin {
       }),
     ];
 
-    const exportAlarms = _.map(exportAlertThresholds, threshold =>
-      new PowerThresholdMotionSensor(
+    const exportAlarms = _.map(exportAlertThresholds, threshold => {
+      let name: string;
+      let evalutation: () => boolean;
+
+      if(threshold < 0) {
+        name = `${threshold} watts imported`;
+        evalutation = () => this.inverterState.ExportingWatts <= threshold;
+      }
+      else {
+        name = `${threshold} watts exported`;
+        evalutation = () => this.inverterState.ExportingWatts >= threshold;
+      }
+      
+      return new PowerThresholdMotionSensor(
         this.api.hap,
         this.log,
-        `${threshold} watts exported`,
+        name,
         this.inverterStateEmitter,
-        () => this.inverterState.ExportingWatts >= threshold));
+        evalutation);
+      });
 
     return callback(accessories.concat(exportAlarms));
   }
