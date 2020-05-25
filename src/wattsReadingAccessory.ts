@@ -1,15 +1,7 @@
-import {
-  AccessoryPlugin,
-  CharacteristicGetCallback,
-  HAP,
-  Logger,
-  Service,
-  CharacteristicEventTypes,
-} from 'homebridge';
-import { InverterStateEmitter } from './solaxPlatform';
+import { AccessoryPlugin, CharacteristicGetCallback, HAP, Logger, Service, CharacteristicEventTypes } from "homebridge";
+import { InverterStateEmitter } from "./solaxPlatform";
 
 export default class WattsReadingAccessory implements AccessoryPlugin {
-
   private readonly service: Service;
   private readonly informationService: Service;
 
@@ -18,20 +10,21 @@ export default class WattsReadingAccessory implements AccessoryPlugin {
     private readonly log: Logger,
     private readonly name: string,
     private readonly inverterStateEmitter: InverterStateEmitter,
-    private readonly getValue: () => number) {
-
+    private readonly getValue: () => number
+  ) {
     this.service = new hap.Service.LightSensor(name);
-    this.service.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel)
+    this.service
+      .getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel)
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         // Minimum value allowed for light sensor is 0.1
-        const sanitisedValue = Math.max(0.1 ,getValue());
+        const sanitisedValue = Math.max(0.1, getValue());
         log.info(`GET for ${name} returned: ${sanitisedValue}`);
         callback(undefined, sanitisedValue);
       });
 
-    inverterStateEmitter.on('event', () => {
+    inverterStateEmitter.on("event", () => {
       // Minimum value allowed for light sensor is 0.1
-      const sanitisedValue = Math.max(0.1 ,getValue());
+      const sanitisedValue = Math.max(0.1, getValue());
 
       log.debug(`Updating value to ${sanitisedValue} for ${name}`);
       // push the new value to HomeKit
@@ -39,8 +32,8 @@ export default class WattsReadingAccessory implements AccessoryPlugin {
     });
 
     this.informationService = new hap.Service.AccessoryInformation()
-      .setCharacteristic(hap.Characteristic.Manufacturer, 'Solax')
-      .setCharacteristic(hap.Characteristic.Model, 'Inverter');
+      .setCharacteristic(hap.Characteristic.Manufacturer, "Solax")
+      .setCharacteristic(hap.Characteristic.Model, "Inverter");
 
     log.info(`Solax watts reader for ${name} created!`);
   }
@@ -50,7 +43,7 @@ export default class WattsReadingAccessory implements AccessoryPlugin {
    * Typical this only ever happens at the pairing process.
    */
   identify(): void {
-    this.log.debug('Identify!');
+    this.log.debug("Identify!");
   }
 
   /*
@@ -58,9 +51,6 @@ export default class WattsReadingAccessory implements AccessoryPlugin {
    * It should return all services which should be added to the accessory.
    */
   getServices(): Service[] {
-    return [
-      this.informationService,
-      this.service,
-    ];
+    return [this.informationService, this.service];
   }
 }

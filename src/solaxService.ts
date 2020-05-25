@@ -1,7 +1,7 @@
-import fetch from 'node-fetch';
-import _ from 'lodash';
-import { Logger } from 'homebridge/lib/logger';
-import Config from './config';
+import fetch from "node-fetch";
+import _ from "lodash";
+import { Logger } from "homebridge/lib/logger";
+import Config from "./config";
 
 enum LiveDatastreamFields {
   PV1Current = 1,
@@ -37,17 +37,17 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
   try {
     const response = await fetch(`${config.address}/api/realTimeData.htm`);
     const bodyText = await response.text();
-    const cleansedResponse = bodyText.replace(/,,/g, ',0,').replace(/,,/g, ',0,');
+    const cleansedResponse = bodyText.replace(/,,/g, ",0,").replace(/,,/g, ",0,");
     const json = JSON.parse(cleansedResponse);
     let genPower = 0;
     let exportPower = 0;
-            
-    _.each( json.Data, ( dataItem, index: number ) => {
+
+    _.each(json.Data, (dataItem, index: number) => {
       // Lookup index data provided starts at 1 :|
       const lookupIndex = index + 1;
-      if(lookupIndex === LiveDatastreamFields.GridPower as number) {
+      if (lookupIndex === (LiveDatastreamFields.GridPower as number)) {
         genPower = parseInt(dataItem);
-      } else if (lookupIndex === LiveDatastreamFields.FeedInPower as number) {
+      } else if (lookupIndex === (LiveDatastreamFields.FeedInPower as number)) {
         exportPower = parseInt(dataItem);
       }
     });
@@ -62,6 +62,6 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
 };
 
 export interface InverterLiveMetrics {
-    generationWatts: number;
-    exportedWatts: number;
+  generationWatts: number;
+  exportedWatts: number;
 }
