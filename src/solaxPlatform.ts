@@ -68,10 +68,10 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     // If before dawn, then sleep till sunrise
     if (now < sunrise && now >= sunset) {
       this.log.debug(`Reduced polling due to being outside of daylight hours. Sunrise = ${sunrise}, Sunset = ${sunset}`);
-      delayMillis = 60000 * 1;
+      delayMillis = 60000 * 5;
     } else {
       // If between sunrise and sunset, we're in the daylight hours, then normal polling
-      delayMillis = 30000;
+      delayMillis = 60000;
     }
 
     return delayMillis;
