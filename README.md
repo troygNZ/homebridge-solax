@@ -6,9 +6,9 @@
 
 # Homebridge-Solax Platform Plugin
 
-Use this plugin to monitor your Solax Inverter - to get realtime metrics from your inverter, and alerts for use with Automations. Inspired by the Solax connector for Home Assistant.
+Use this plugin to monitor your Solax Inverter. It can provide realtime metrics from your inverter along with configurable alerts for Automation purposes.
 
-Note: HomeKit doesn't natively support a solar inverter or a watts based reader acccessory. To work around this, a light sensor accessory type was chosen - as its value range suited solar inverter metrics, with the excepof the minimum value. 0.1 is used to represent 0.
+Note: HomeKit doesn't natively support a solar inverter or a watts based acccessory. To work around this limitation, a light sensor accessory is used the display the various metrics. Noting the minimum allowed value for a light sensor is 0.1.
 
 ![Example Homekit Page](IMG_0931.PNG)
 
