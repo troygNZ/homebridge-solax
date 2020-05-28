@@ -2,10 +2,11 @@ import { APIEvent } from "homebridge";
 import type { API, StaticPlatformPlugin, Logger, AccessoryPlugin, PlatformConfig } from "homebridge";
 import util from "util";
 import { getSunrise, getSunset } from "sunrise-sunset-js";
-import { getValuesAsync } from "./solaxService";
+import { getValuesAsync, InverterLiveMetrics } from "./solaxService";
 import Config from "./config";
 import WattsReadingAccessory from "./wattsReadingAccessory";
 import PowerThresholdMotionSensor from "./powerThresholdMotionSensor";
+import SolarBattery, { BatteryDetails } from "./solarBattery";
 import { EventEmitter } from "events";
 import _ from "lodash";
 
@@ -14,24 +15,33 @@ export class InverterStateEmitter extends EventEmitter {}
 export class SolaxPlatform implements StaticPlatformPlugin {
   public readonly inverterStateEmitter = new InverterStateEmitter();
   public readonly config: Config;
-  public readonly inverterState = {
-    PowerGenerationWatts: 0,
-    ExportingWatts: 0,
-  };
+  public inverterState: InverterLiveMetrics;
 
   constructor(public readonly log: Logger, config: PlatformConfig, public readonly api: API) {
     this.inverterStateEmitter.setMaxListeners(15);
     this.log.debug(`Config: \n${JSON.stringify(config, null, "  ")}`);
-    this.config = config as Config;
+    this.config = this.applyDefaults(config);
+
     this.log.info(`Solax Host: ${this.config.address}`);
     this.log.info(`Latitude: ${this.config.latitude}`);
     this.log.info(`Longitude: ${this.config.longitude}`);
-    this.log.info(`Export Alert Thresholds: [${this.config.exportAlertThresholds ? this.config.exportAlertThresholds.join(",") : []}]`);
+    this.log.info(`Export Alert Thresholds: [${this.config.exportAlertThresholds.join(",")}]`);
+    this.log.info(`Battery: ${this.config.hasBattery}`);
+    this.log.info(`Show Strings: ${this.config.showStrings}`);
+
     if (!this.config.latitude || !this.config.longitude) {
       this.log.warn("Ideally longtitude and latitude values should be provided in order to provide accurate sunset and sunrise timings.");
     }
 
     this.log.debug("Finished initializing platform:", this.config.name);
+    this.inverterState = {
+      generationWatts: 0,
+      exportedWatts: 0,
+      batteryPercentage: 0,
+      batteryPowerWatts: 0,
+      pv1PowerWatts: 0,
+      pv2PowerWatts: 0,
+    };
 
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       log.debug("Executed didFinishLaunching callback");
@@ -42,12 +52,14 @@ export class SolaxPlatform implements StaticPlatformPlugin {
   sleep = util.promisify(setTimeout);
   async getLatestReadingsPeriodically() {
     try {
-      const result = await getValuesAsync(this.log, this.config);
-      this.inverterState.ExportingWatts = result.exportedWatts;
-      this.inverterState.PowerGenerationWatts = result.generationWatts;
+      this.inverterState = await getValuesAsync(this.log, this.config);
 
-      this.log.debug("Power Gen: " + result.generationWatts);
-      this.log.debug("Export: " + result.exportedWatts);
+      this.log.debug("Power Gen: " + this.inverterState.generationWatts);
+      this.log.debug("Export: " + this.inverterState.exportedWatts);
+      this.log.debug("Battery Percentage: " + this.inverterState.batteryPercentage);
+      this.log.debug("Battery Power: " + this.inverterState.batteryPowerWatts);
+      this.log.debug("PV1: " + this.inverterState.pv1PowerWatts);
+      this.log.debug("PV2: " + this.inverterState.pv2PowerWatts);
 
       this.inverterStateEmitter.emit("event");
     } catch (error) {
@@ -59,10 +71,23 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     this.sleep(delay).then(async () => await this.getLatestReadingsPeriodically());
   }
 
+  applyDefaults(config: PlatformConfig): Config {
+    const asConfig = config as Config;
+
+    return {
+      ...asConfig,
+      hasBattery: asConfig.hasBattery === undefined ? true : asConfig.hasBattery,
+      showStrings: asConfig.showStrings === undefined ? true : asConfig.showStrings,
+      latitude: asConfig.latitude === undefined ? 0 : asConfig.latitude,
+      longitude: asConfig.longitude === undefined ? 0 : asConfig.longitude,
+      exportAlertThresholds: asConfig.exportAlertThresholds == null ? [] : asConfig.exportAlertThresholds,
+    };
+  }
+
   determineDelayMillis(): number {
     const now = new Date();
-    const sunrise = getSunrise(this.config.latitude ?? 0, this.config.longitude ?? 0);
-    const sunset = getSunset(this.config.latitude ?? 0, this.config.longitude ?? 0);
+    const sunrise = getSunrise(this.config.latitude, this.config.longitude);
+    const sunset = getSunset(this.config.latitude, this.config.longitude);
 
     let delayMillis: number;
     // If before dawn, then sleep till sunrise
@@ -84,36 +109,58 @@ export class SolaxPlatform implements StaticPlatformPlugin {
    * The set of exposed accessories CANNOT change over the lifetime of the plugin!
    */
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
-    const exportAlertThresholds = this.config.exportAlertThresholds ? this.config.exportAlertThresholds : [];
     const accessories: AccessoryPlugin[] = [
       new WattsReadingAccessory(this.api.hap, this.log, "Exported Watts", this.inverterStateEmitter, () => {
-        return this.inverterState.ExportingWatts >= 0 ? this.inverterState.ExportingWatts : 0;
+        return this.inverterState.exportedWatts >= 0 ? this.inverterState.exportedWatts : 0;
       }),
 
       new WattsReadingAccessory(this.api.hap, this.log, "Imported Watts", this.inverterStateEmitter, () => {
-        return this.inverterState.ExportingWatts < 0 ? Math.abs(this.inverterState.ExportingWatts) : 0;
+        return this.inverterState.exportedWatts < 0 ? Math.abs(this.inverterState.exportedWatts) : 0;
       }),
 
       new WattsReadingAccessory(this.api.hap, this.log, "Power Gen Watts", this.inverterStateEmitter, () => {
-        return this.inverterState.PowerGenerationWatts;
+        return this.inverterState.generationWatts;
       }),
     ];
 
-    const exportAlarms = _.map(exportAlertThresholds, (threshold) => {
+    const battery = this.config.hasBattery
+      ? [
+          new SolarBattery(this.api.hap, this.log, "Solar Battery", this.inverterStateEmitter, () => {
+            return {
+              batteryPercentage: this.inverterState.batteryPercentage,
+              batteryWatts: this.inverterState.batteryPowerWatts,
+            };
+          }),
+        ]
+      : [];
+
+    const inverterStrings = this.config.showStrings
+      ? [
+          new WattsReadingAccessory(this.api.hap, this.log, "PV1 Watts", this.inverterStateEmitter, () => {
+            return this.inverterState.pv1PowerWatts;
+          }),
+
+          new WattsReadingAccessory(this.api.hap, this.log, "PV2 Watts", this.inverterStateEmitter, () => {
+            return this.inverterState.pv2PowerWatts;
+          }),
+        ]
+      : [];
+
+    const exportAlarms = _.map(this.config.exportAlertThresholds, (threshold) => {
       let name: string;
       let evalutation: () => boolean;
 
       if (threshold < 0) {
         name = `${Math.abs(threshold)} watts imported`;
-        evalutation = () => this.inverterState.ExportingWatts <= threshold;
+        evalutation = () => this.inverterState.exportedWatts <= threshold;
       } else {
         name = `${threshold} watts exported`;
-        evalutation = () => this.inverterState.ExportingWatts >= threshold;
+        evalutation = () => this.inverterState.exportedWatts >= threshold;
       }
 
       return new PowerThresholdMotionSensor(this.api.hap, this.log, name, this.inverterStateEmitter, evalutation);
     });
 
-    return callback(accessories.concat(exportAlarms));
+    return callback(accessories.concat(exportAlarms).concat(battery).concat(inverterStrings));
   }
 }

@@ -12,7 +12,7 @@ Use this plugin to monitor your Solax Inverter - to get realtime metrics from yo
 
 Requires the installation of the Solax Monitoring Dongle, and usage of a static IP address on your LAN. Refer to your Router configuration guide on how to do this.
 
-Once you know the IP address of your Solax Inverter, navigate to http://<InverterIpAddress/>/api/realTimeData.htm
+Once you know the IP address of your Solax Inverter, navigate to http://{InverterIpAddress}/api/realTimeData.htm
 Here you should get a (malformed) JSON payload, but this will confirm it's possible to extract metrics from it.
 
 ## Installation
@@ -33,7 +33,9 @@ npm install homebridge-solax
         "address": "http://192.168.1.40",
         "latitude": -36.804993,
         "longitude": 175.132414,
-        "exportAlertThresholds": [-5000, 0, 1000, 1500]
+        "exportAlertThresholds": [-5000, 0, 1000, 1500],
+        "showStrings": true,
+        "hasBattery": false
       }
     ]
 ```
@@ -45,6 +47,10 @@ npm install homebridge-solax
 **longitude**: _Optional_: Specifies the longitude of your solar installation. Used to determining accurate Sunset and Sunrise times.
 
 **exportAlertThresholds**: _Optional_: Array of integers specifying the thresholds to create Alerts for. This will activate a motion trigger when the power export matches or exceeds the threshold value. Example: [-1000, 500, 2000] will create three motion sensors - "1000 watts imported", "500 watts exported" and "2000 watts exported".
+
+**showStrings**: _Optional_: Defaults to true. Shows Individual Inverter String metrics (PV1, PV2).
+
+**hasBattery**: _Optional_: Defaults to true. Experimental. Shows Battery information. Note, due to limited documentaiton from Solax, the Charging State is estimated based on the delta of Battery Watts.
 
 ### Leveraging in Automations via Motion Sensor Accessories
 
