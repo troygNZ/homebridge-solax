@@ -45,6 +45,18 @@
           "title": "Threshold to trigger the alert",
           "type": "integer"
         }
+      },
+      "showStrings": {
+        "title": "Show Individual Inverter String metrics",
+        "type": "boolean",
+        "required": false,
+        "default": true
+      },
+      "hasBattery": {
+        "title": "Show Battery details (experimental)",
+        "type": "boolean",
+        "required": false,
+        "default": true
       }
     }
   }
