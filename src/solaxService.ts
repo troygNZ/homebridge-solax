@@ -39,8 +39,12 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
     const bodyText = await response.text();
     const cleansedResponse = bodyText.replace(/,,/g, ",0,").replace(/,,/g, ",0,");
     const json = JSON.parse(cleansedResponse);
-    let genPower = 0;
-    let exportPower = 0;
+    let genPower: number | null = null;
+    let exportPower: number | null = null;
+    let batteryPercentage: number | null = null;
+    let batteryPowerWatts: number | null = null;
+    let pv1PowerWatts: number | null = null;
+    let pv2PowerWatts: number | null = null;
 
     _.each(json.Data, (dataItem, index: number) => {
       // Lookup index data provided starts at 1 :|
@@ -49,11 +53,23 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
         genPower = parseInt(dataItem);
       } else if (lookupIndex === (LiveDatastreamFields.FeedInPower as number)) {
         exportPower = parseInt(dataItem);
+      } else if (lookupIndex === (LiveDatastreamFields.BatteryCapacity as number)) {
+        batteryPercentage = parseInt(dataItem);
+      } else if (lookupIndex === (LiveDatastreamFields.BatteryPower as number)) {
+        batteryPowerWatts = parseInt(dataItem);
+      } else if (lookupIndex === (LiveDatastreamFields.PV1Power as number)) {
+        pv1PowerWatts = parseInt(dataItem);
+      } else if (lookupIndex === (LiveDatastreamFields.PV2Power as number)) {
+        pv2PowerWatts = parseInt(dataItem);
       }
     });
     return {
-      generationWatts: genPower,
-      exportedWatts: exportPower,
+      generationWatts: genPower ?? 0,
+      exportedWatts: exportPower ?? 0,
+      batteryPercentage: batteryPercentage ?? 0,
+      batteryPowerWatts: batteryPowerWatts ?? 0,
+      pv1PowerWatts: pv1PowerWatts ?? 0,
+      pv2PowerWatts: pv2PowerWatts ?? 0,
     };
   } catch (error) {
     log.debug(`That did not go well. Error: ${error}`);
@@ -64,4 +80,8 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
 export interface InverterLiveMetrics {
   generationWatts: number;
   exportedWatts: number;
+  batteryPercentage: number;
+  batteryPowerWatts: number;
+  pv1PowerWatts: number;
+  pv2PowerWatts: number;
 }

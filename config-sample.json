@@ -5,7 +5,9 @@
       "name": "Solax Inverter",
       "latitude": 45.804993,
       "longitude": 175.132414,
-      "exportAlertThresholds": [-2000, 0, 1000, 1500]
+      "exportAlertThresholds": [-2000, 0, 1000, 1500],
+      "showStrings": true,
+      "hasBattery": false
     }
   ]
 }
