@@ -55,7 +55,7 @@ export default class SolarBattery implements AccessoryPlugin {
   };
 
   determineChargingState = (batteryValues: BatteryDetails): number => {
-    const currentWatts = this.getBatteryValues().batteryWatts;
+    const currentWatts = batteryValues.batteryWatts;
     const result = this.previousWatts === null || currentWatts > this.previousWatts ? 1 : 0;
     this.previousWatts = currentWatts;
     return result;
