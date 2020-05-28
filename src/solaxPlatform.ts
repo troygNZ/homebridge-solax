@@ -6,7 +6,7 @@ import { getValuesAsync, InverterLiveMetrics } from "./solaxService";
 import Config from "./config";
 import WattsReadingAccessory from "./wattsReadingAccessory";
 import PowerThresholdMotionSensor from "./powerThresholdMotionSensor";
-import SolarBattery, { BatteryDetails } from "./solarBattery";
+import SolarBattery from "./solarBattery";
 import { EventEmitter } from "events";
 import _ from "lodash";
 
@@ -80,7 +80,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
       showStrings: asConfig.showStrings === undefined ? true : asConfig.showStrings,
       latitude: asConfig.latitude === undefined ? 0 : asConfig.latitude,
       longitude: asConfig.longitude === undefined ? 0 : asConfig.longitude,
-      exportAlertThresholds: asConfig.exportAlertThresholds == null ? [] : asConfig.exportAlertThresholds,
+      exportAlertThresholds: asConfig.exportAlertThresholds === null ? [] : asConfig.exportAlertThresholds,
     };
   }
 
@@ -124,15 +124,13 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     ];
 
     const battery = this.config.hasBattery
-      ? [
-          new SolarBattery(this.api.hap, this.log, "Solar Battery", this.inverterStateEmitter, () => {
-            return {
-              batteryPercentage: this.inverterState.batteryPercentage,
-              batteryWatts: this.inverterState.batteryPowerWatts,
-            };
-          }),
-        ]
-      : [];
+      ? new SolarBattery(this.api.hap, this.log, "Solar Battery", this.inverterStateEmitter, () => {
+          return {
+            batteryPercentage: this.inverterState.batteryPercentage,
+            batteryWatts: this.inverterState.batteryPowerWatts,
+          };
+        })
+      : null;
 
     const inverterStrings = this.config.showStrings
       ? [
@@ -161,6 +159,11 @@ export class SolaxPlatform implements StaticPlatformPlugin {
       return new PowerThresholdMotionSensor(this.api.hap, this.log, name, this.inverterStateEmitter, evalutation);
     });
 
-    return callback(accessories.concat(exportAlarms).concat(battery).concat(inverterStrings));
+    return callback(
+      accessories
+        .concat(exportAlarms)
+        .concat(battery === null ? [] : battery)
+        .concat(inverterStrings)
+    );
   }
 }

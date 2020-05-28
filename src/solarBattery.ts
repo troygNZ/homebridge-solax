@@ -29,21 +29,36 @@ export default class SolarBattery implements AccessoryPlugin {
       .setCharacteristic(hap.Characteristic.Manufacturer, "Solax")
       .setCharacteristic(hap.Characteristic.Model, "Inverter");
 
+    inverterStateEmitter.on("event", () => {
+      const batteryValues = getBatteryValues();
+      log.debug(`Updating battery status for ${name}. Values:  ${JSON.stringify(batteryValues, null, "  ")}.`);
+      this.service.updateCharacteristic(hap.Characteristic.BatteryLevel, batteryValues.batteryPercentage);
+      this.service.updateCharacteristic(hap.Characteristic.ChargingState, this.determineChargingState(batteryValues));
+    });
     log.info(`Solax Battery Accessory for ${name} created!`);
   }
 
   handleBatteryLevelGet = (callback: any): void => {
-    callback(null, this.getBatteryValues().batteryPercentage);
+    const result = this.getBatteryValues().batteryPercentage;
+    this.log.info(`GET for batteryLevel returned: ${result}`);
+    callback(null, result);
   };
 
   handleChargingStateGet = (callback: any): void => {
-    const currentWatts = this.getBatteryValues().batteryWatts;
-    callback(null, this.previousWatts === null || currentWatts > this.previousWatts ? 1 : 0);
-    this.previousWatts = currentWatts;
+    const result = this.determineChargingState(this.getBatteryValues());
+    this.log.info(`GET for handleChargingStateGet returned: ${result}`);
+    callback(null, result);
   };
 
   handleStatusLowBatteryGet = (callback: any): void => {
     callback(null, 0);
+  };
+
+  determineChargingState = (batteryValues: BatteryDetails): number => {
+    const currentWatts = this.getBatteryValues().batteryWatts;
+    const result = this.previousWatts === null || currentWatts > this.previousWatts ? 1 : 0;
+    this.previousWatts = currentWatts;
+    return result;
   };
   /*
    * This method is optional to implement. It is called when HomeKit ask to identify the accessory.
