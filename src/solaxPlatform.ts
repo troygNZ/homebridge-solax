@@ -123,14 +123,16 @@ export class SolaxPlatform implements StaticPlatformPlugin {
       }),
     ];
 
-    const battery = this.config.hasBattery
-      ? new SolarBattery(this.api.hap, this.log, "Solar Battery", this.inverterStateEmitter, () => {
-          return {
-            batteryPercentage: this.inverterState.batteryPercentage,
-            batteryWatts: this.inverterState.batteryPowerWatts,
-          };
-        })
-      : null;
+    let battery = null;
+    if (this.config.hasBattery) {
+      const getDetails = () => {
+        return {
+          batteryPercentage: this.inverterState.batteryPercentage,
+          batteryWatts: this.inverterState.batteryPowerWatts,
+        };
+      };
+      battery = new SolarBattery(this.api.hap, this.log, "Solar Battery", this.inverterStateEmitter, getDetails);
+    }
 
     const inverterStrings = this.config.showStrings
       ? [

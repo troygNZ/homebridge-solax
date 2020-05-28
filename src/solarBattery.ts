@@ -60,6 +60,7 @@ export default class SolarBattery implements AccessoryPlugin {
     this.previousWatts = currentWatts;
     return result;
   };
+
   /*
    * This method is optional to implement. It is called when HomeKit ask to identify the accessory.
    * Typical this only ever happens at the pairing process.
