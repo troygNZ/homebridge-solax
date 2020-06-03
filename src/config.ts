@@ -21,10 +21,11 @@ export class ConfigHelper {
   static applyDefaults(config: PlatformConfig, log: Logger): Config {
     const asConfig = config as Config;
 
-    const maybeValueStrategy: ValueStrategy | undefined = (<any>ValueStrategy)[asConfig.valueStrategy];
+    const maybeValueStrategy: ValueStrategy | undefined = (ValueStrategy as any)[asConfig.valueStrategy];
     if (maybeValueStrategy === undefined) {
       log.warn(
-        `Unknown valueStrategy value of '${asConfig.valueStrategy}'. Defaulting to ${ValueStrategy.SimpleMovingAverage} (SimpleMovingAverage)`
+        `Unknown valueStrategy value of '${asConfig.valueStrategy}'.
+         Defaulting to ${ValueStrategy.SimpleMovingAverage} (SimpleMovingAverage)`
       );
     }
 

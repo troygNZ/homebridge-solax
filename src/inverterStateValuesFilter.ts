@@ -37,17 +37,7 @@ export default class InverterStateValuesFilter {
   private static computeValues(valueStrategy: ValueStrategy, history: Array<InverterLiveMetrics>, log: Logger): InverterLiveMetrics {
     switch (valueStrategy) {
       case ValueStrategy.SimpleMovingAverage:
-        const len = history.length;
-        const start = Math.max(0, len - this.simpleMovingAverageLength);
-        const lastNSamples = history.slice(start, len);
-        log.debug("Sample set");
-        _.forEach(lastNSamples, (sample, i) => log.debug(`${i} = ${JSON.stringify(sample, null, "  ")}`));
-        log.debug("----------");
-
-        if (lastNSamples.length === 0) {
-          return this.defaultValue;
-        }
-        return this.average(lastNSamples);
+        return this.computeSimpleMovingAverage(history, log);
       case ValueStrategy.LatestReading:
       default:
         return history.length === 0 ? this.defaultValue : history[history.length - 1];
@@ -56,6 +46,20 @@ export default class InverterStateValuesFilter {
 
   getValues(): InverterLiveMetrics {
     return this.computedValues;
+  }
+
+  private static computeSimpleMovingAverage(history: Array<InverterLiveMetrics>, log: Logger) {
+    const len = history.length;
+    const start = Math.max(0, len - this.simpleMovingAverageLength);
+    const lastNSamples = history.slice(start, len);
+    log.debug("Sample set");
+    _.forEach(lastNSamples, (sample, i) => log.debug(`${i} = ${JSON.stringify(sample, null, "  ")}`));
+    log.debug("----------");
+
+    if (lastNSamples.length === 0) {
+      return this.defaultValue;
+    }
+    return this.average(lastNSamples);
   }
 
   private static sum(metrics: InverterLiveMetrics[]): InverterLiveMetrics {
