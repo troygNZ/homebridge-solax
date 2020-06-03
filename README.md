@@ -37,7 +37,8 @@ npm install homebridge-solax
         "longitude": 175.132414,
         "exportAlertThresholds": [-5000, 0, 1000, 1500],
         "showStrings": true,
-        "hasBattery": false
+        "hasBattery": false,
+        "valueStrategy": "SimpleMovingAverage"
       }
     ]
 ```
