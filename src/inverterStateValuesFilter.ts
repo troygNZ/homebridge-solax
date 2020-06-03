@@ -1,9 +1,13 @@
 import { InverterLiveMetrics } from "./solaxService";
 import type { Logger } from "homebridge";
 import _ from "lodash";
+import { ValueStrategy } from "./config";
 
 export default class InverterStateValuesFilter {
-  defaultValue: InverterLiveMetrics = {
+  private static readonly historyLength = 60;
+  private static readonly simpleMovingAverageLength = 10;
+
+  private static defaultValue: InverterLiveMetrics = {
     batteryPercentage: 0,
     batteryPowerWatts: 0,
     exportedWatts: 0,
@@ -12,39 +16,49 @@ export default class InverterStateValuesFilter {
     pv2PowerWatts: 0,
   };
 
-  public inverterStateHistory: Array<InverterLiveMetrics>;
+  private readonly inverterStateHistory: Array<InverterLiveMetrics>;
+  private computedValues: InverterLiveMetrics;
 
   constructor(public readonly log: Logger, public valueStrategy: ValueStrategy) {
     this.inverterStateHistory = new Array<InverterLiveMetrics>();
+    this.computedValues = InverterStateValuesFilter.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
   }
 
   addReadings(metrics: InverterLiveMetrics): void {
+    this.log.debug(`Latest readings added: ${JSON.stringify(metrics, null, "  ")}`);
     this.inverterStateHistory.push(metrics);
-    while (this.inverterStateHistory.length > 60) {
+    while (this.inverterStateHistory.length > InverterStateValuesFilter.historyLength) {
       this.inverterStateHistory.shift();
+    }
+    this.computedValues = InverterStateValuesFilter.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
+    this.log.debug(`Calculated values: ${JSON.stringify(this.computedValues, null, "  ")}`);
+  }
+
+  private static computeValues(valueStrategy: ValueStrategy, history: Array<InverterLiveMetrics>, log: Logger): InverterLiveMetrics {
+    switch (valueStrategy) {
+      case ValueStrategy.SimpleMovingAverage:
+        const len = history.length;
+        const start = Math.max(0, len - this.simpleMovingAverageLength);
+        const lastNSamples = history.slice(start, len);
+        log.debug("Sample set");
+        _.forEach(lastNSamples, (sample, i) => log.debug(`${i} = ${JSON.stringify(sample, null, "  ")}`));
+        log.debug("----------");
+
+        if (lastNSamples.length === 0) {
+          return this.defaultValue;
+        }
+        return this.average(lastNSamples);
+      case ValueStrategy.LatestReading:
+      default:
+        return history.length === 0 ? this.defaultValue : history[history.length - 1];
     }
   }
 
   getValues(): InverterLiveMetrics {
-    // TODO - make configurable
-    switch (this.valueStrategy) {
-      case ValueStrategy.Latest:
-        return this.inverterStateHistory.length === 0 ? this.defaultValue : this.inverterStateHistory[this.inverterStateHistory.length];
-      case ValueStrategy.Average:
-        const len = this.inverterStateHistory.length;
-        const lastNSamples = this.inverterStateHistory.slice(Math.max(0, len - 6), len - 1);
-        const numSamples = lastNSamples.length;
-        _.forEach(lastNSamples, (sample, i) => {
-          this.log.debug(`Sample ${i} - ${JSON.stringify(sample)}`);
-        });
-        if (numSamples === 0) {
-          return this.defaultValue;
-        }
-        return this.average(lastNSamples);
-    }
+    return this.computedValues;
   }
 
-  sum(metrics: InverterLiveMetrics[]): InverterLiveMetrics {
+  private static sum(metrics: InverterLiveMetrics[]): InverterLiveMetrics {
     return _.reduce<InverterLiveMetrics, InverterLiveMetrics>(
       metrics,
       (a, b) => {
@@ -61,7 +75,7 @@ export default class InverterStateValuesFilter {
     );
   }
 
-  average(metrics: InverterLiveMetrics[]): InverterLiveMetrics {
+  private static average(metrics: InverterLiveMetrics[]): InverterLiveMetrics {
     const summedResults = this.sum(metrics);
     return {
       batteryPercentage: summedResults.batteryPercentage / metrics.length,
@@ -72,10 +86,4 @@ export default class InverterStateValuesFilter {
       pv2PowerWatts: summedResults.pv2PowerWatts / metrics.length,
     };
   }
-}
-
-export enum ValueStrategy {
-  Latest,
-  Average,
-  //ExponentialMovingAverage,
 }

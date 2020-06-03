@@ -57,6 +57,18 @@
         "type": "boolean",
         "required": false,
         "default": true
+      },
+      "valueStrategy": {
+        "title": "The value strategy to apply",
+        "type": "array",
+        "required": false,
+        "default": "Simple",
+        "description": "The filtering strategy to apply to the input readings.",
+        "items": {
+          "title": "Strategy",
+          "type": "string",
+          "enum": ["LatestReading", "SimpleMovingAverage"]
+        }
       }
     }
   }

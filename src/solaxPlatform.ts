@@ -3,12 +3,12 @@ import type { API, StaticPlatformPlugin, Logger, AccessoryPlugin, PlatformConfig
 import util from "util";
 import { getSunrise, getSunset } from "sunrise-sunset-js";
 import { getValuesAsync } from "./solaxService";
-import Config from "./config";
+import Config, { ConfigHelper, ValueStrategy } from "./config";
 import WattsReadingAccessory from "./wattsReadingAccessory";
 import PowerThresholdMotionSensor from "./powerThresholdMotionSensor";
 import SolarBattery from "./solarBattery";
 import { EventEmitter } from "events";
-import InverterStateValuesFilter, { ValueStrategy } from "./inverterStateValuesFilter";
+import InverterStateValuesFilter from "./inverterStateValuesFilter";
 import _ from "lodash";
 
 export class InverterStateEmitter extends EventEmitter {}
@@ -21,9 +21,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
   constructor(public readonly log: Logger, config: PlatformConfig, public readonly api: API) {
     this.inverterStateEmitter.setMaxListeners(15);
     this.log.debug(`Config: \n${JSON.stringify(config, null, "  ")}`);
-    this.config = this.applyDefaults(config);
-
-    this.values = new InverterStateValuesFilter(this.log, ValueStrategy.Average);
+    this.config = ConfigHelper.applyDefaults(config, this.log);
 
     this.log.info(`Solax Host: ${this.config.address}`);
     this.log.info(`Latitude: ${this.config.latitude}`);
@@ -31,6 +29,9 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     this.log.info(`Export Alert Thresholds: [${this.config.exportAlertThresholds.join(",")}]`);
     this.log.info(`Battery: ${this.config.hasBattery}`);
     this.log.info(`Show Strings: ${this.config.showStrings}`);
+    this.log.info(`Value Strategy: ${this.config.valueStrategy}`);
+
+    this.values = new InverterStateValuesFilter(this.log, this.config.valueStrategy);
 
     if (!this.config.latitude || !this.config.longitude) {
       this.log.warn("Ideally longtitude and latitude values should be provided in order to provide accurate sunset and sunrise timings.");
@@ -67,19 +68,6 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     this.sleep(delay).then(async () => await this.getLatestReadingsPeriodically());
   }
 
-  applyDefaults(config: PlatformConfig): Config {
-    const asConfig = config as Config;
-
-    return {
-      ...asConfig,
-      hasBattery: asConfig.hasBattery === undefined ? true : asConfig.hasBattery,
-      showStrings: asConfig.showStrings === undefined ? true : asConfig.showStrings,
-      latitude: asConfig.latitude === undefined ? 0 : asConfig.latitude,
-      longitude: asConfig.longitude === undefined ? 0 : asConfig.longitude,
-      exportAlertThresholds: asConfig.exportAlertThresholds === null ? [] : asConfig.exportAlertThresholds,
-    };
-  }
-
   determineDelayMillis(): number {
     const now = new Date();
     const sunrise = getSunrise(this.config.latitude, this.config.longitude);
@@ -89,10 +77,10 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     // If before dawn, then sleep till sunrise
     if (now < sunrise && now >= sunset) {
       //this.log.debug(`Reduced polling due to being outside of daylight hours. Sunrise = ${sunrise}, Sunset = ${sunset}`);
-      delayMillis = 10000;
+      delayMillis = 60000;
     } else {
       // If between sunrise and sunset, we're in the daylight hours, then normal polling
-      delayMillis = 30000;
+      delayMillis = 60000;
     }
 
     return delayMillis;
@@ -108,7 +96,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     const accessories: AccessoryPlugin[] = [
       new WattsReadingAccessory(this.api.hap, this.log, "Exported Watts", this.inverterStateEmitter, () => {
         const result = this.values.getValues().exportedWatts;
-        return result >= 0 ? result : 0.1;
+        return result >= 0 ? result : 0;
       }),
 
       new WattsReadingAccessory(this.api.hap, this.log, "Imported Watts", this.inverterStateEmitter, () => {
