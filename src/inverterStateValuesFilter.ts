@@ -52,14 +52,22 @@ export default class InverterStateValuesFilter {
     const len = history.length;
     const start = Math.max(0, len - this.simpleMovingAverageLength);
     const lastNSamples = history.slice(start, len);
-    log.debug("Sample set");
-    _.forEach(lastNSamples, (sample, i) => log.debug(`${i} = ${JSON.stringify(sample, null, "  ")}`));
-    log.debug("----------");
 
     if (lastNSamples.length === 0) {
       return this.defaultValue;
     }
-    return this.average(lastNSamples);
+    const result = this.average(lastNSamples);
+
+    log.debug(`Exported Watts: Avg[${_.map(lastNSamples, (sample) => sample.exportedWatts).join(",")}] = ${result.exportedWatts}`);
+    log.debug(`Generation Watts: Avg[${_.map(lastNSamples, (sample) => sample.generationWatts).join(",")}] = ${result.generationWatts}`);
+    log.debug(`PV1 Watts: Avg[${_.map(lastNSamples, (sample) => sample.pv1PowerWatts).join(",")}] = ${result.pv1PowerWatts}`);
+    log.debug(`PV2 Watts: Avg[${_.map(lastNSamples, (sample) => sample.pv2PowerWatts).join(",")}] = ${result.pv2PowerWatts}`);
+    log.debug(`Battery Watts: Avg[${_.map(lastNSamples, (sample) => sample.batteryPowerWatts).join(",")}] = ${result.batteryPowerWatts}`);
+    log.debug(
+      `Battery Percentage: Avg[${_.map(lastNSamples, (sample) => sample.batteryPercentage).join(",")}] = ${result.batteryPercentage}`
+    );
+
+    return result;
   }
 
   private static sum(metrics: InverterLiveMetrics[]): InverterLiveMetrics {
