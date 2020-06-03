@@ -22,7 +22,7 @@ export class ConfigHelper {
     const asConfig = config as Config;
 
     const maybeValueStrategy: ValueStrategy | undefined = (ValueStrategy as any)[asConfig.valueStrategy];
-    if (maybeValueStrategy === undefined) {
+    if (maybeValueStrategy === undefined && asConfig.valueStrategy !== undefined) {
       log.warn(
         `Unknown valueStrategy value of '${asConfig.valueStrategy}'.
          Defaulting to ${ValueStrategy.SimpleMovingAverage} (SimpleMovingAverage)`

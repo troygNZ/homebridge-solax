@@ -60,7 +60,7 @@
       },
       "valueStrategy": {
         "title": "The value strategy to apply",
-        "type": "array",
+        "type": "string",
         "required": false,
         "default": "Simple",
         "description": "The filtering strategy to apply to the input readings.",
