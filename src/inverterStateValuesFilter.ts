@@ -58,12 +58,12 @@ export default class InverterStateValuesFilter {
     }
     const result = this.average(lastNSamples);
 
-    log.debug(`Exported Watts: Avg[${_.map(lastNSamples, (sample) => sample.exportedWatts).join(",")}] = ${result.exportedWatts}`);
-    log.debug(`Generation Watts: Avg[${_.map(lastNSamples, (sample) => sample.generationWatts).join(",")}] = ${result.generationWatts}`);
-    log.debug(`PV1 Watts: Avg[${_.map(lastNSamples, (sample) => sample.pv1PowerWatts).join(",")}] = ${result.pv1PowerWatts}`);
-    log.debug(`PV2 Watts: Avg[${_.map(lastNSamples, (sample) => sample.pv2PowerWatts).join(",")}] = ${result.pv2PowerWatts}`);
-    log.debug(`Battery Watts: Avg[${_.map(lastNSamples, (sample) => sample.batteryPowerWatts).join(",")}] = ${result.batteryPowerWatts}`);
-    log.debug(
+    log.info(`Exported Watts: Avg[${_.map(lastNSamples, (sample) => sample.exportedWatts).join(",")}] = ${result.exportedWatts}`);
+    log.info(`Generation Watts: Avg[${_.map(lastNSamples, (sample) => sample.generationWatts).join(",")}] = ${result.generationWatts}`);
+    log.info(`PV1 Watts: Avg[${_.map(lastNSamples, (sample) => sample.pv1PowerWatts).join(",")}] = ${result.pv1PowerWatts}`);
+    log.info(`PV2 Watts: Avg[${_.map(lastNSamples, (sample) => sample.pv2PowerWatts).join(",")}] = ${result.pv2PowerWatts}`);
+    log.info(`Battery Watts: Avg[${_.map(lastNSamples, (sample) => sample.batteryPowerWatts).join(",")}] = ${result.batteryPowerWatts}`);
+    log.info(
       `Battery Percentage: Avg[${_.map(lastNSamples, (sample) => sample.batteryPercentage).join(",")}] = ${result.batteryPercentage}`
     );
 
