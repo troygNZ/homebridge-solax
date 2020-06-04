@@ -3,8 +3,9 @@
     {
       "platform": "SolaxHomebridgePlugin",
       "name": "Solax Inverter",
-      "latitude": 45.804993,
-      "longitude": 175.132414,
+      "address": "192.168.1.100",
+      "pollingFrequencySeconds": 60,
+      "movingAverageHistoryMinutes": 10,
       "exportAlertThresholds": [-2000, 0, 1000, 1500],
       "showStrings": true,
       "hasBattery": false,

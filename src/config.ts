@@ -1,10 +1,10 @@
 import type { PlatformConfig } from "homebridge";
 import type { Logger } from "homebridge";
 
-export default interface Config extends PlatformConfig {
+export default interface Config {
   address: string;
-  latitude: number;
-  longitude: number;
+  movingAverageHistoryLength: number;
+  pollingFrequencySeconds: number;
   exportAlertThresholds: number[];
   hasBattery: boolean;
   showStrings: boolean;
@@ -19,23 +19,21 @@ export enum ValueStrategy {
 
 export class ConfigHelper {
   static applyDefaults(config: PlatformConfig, log: Logger): Config {
-    const asConfig = config as Config;
-
-    const maybeValueStrategy: ValueStrategy | undefined = (ValueStrategy as any)[asConfig.valueStrategy];
-    if (maybeValueStrategy === undefined && asConfig.valueStrategy !== undefined) {
+    const maybeValueStrategy: ValueStrategy | undefined = (ValueStrategy as any)[config.valueStrategy];
+    if (maybeValueStrategy === undefined && config.valueStrategy !== undefined) {
       log.warn(
-        `Unknown valueStrategy value of '${asConfig.valueStrategy}'.
+        `Unknown valueStrategy value of '${config.valueStrategy}'.
          Defaulting to ${ValueStrategy.SimpleMovingAverage} (SimpleMovingAverage)`
       );
     }
 
     return {
-      ...asConfig,
-      hasBattery: asConfig.hasBattery === undefined ? true : asConfig.hasBattery,
-      showStrings: asConfig.showStrings === undefined ? true : asConfig.showStrings,
-      latitude: asConfig.latitude === undefined ? 0 : asConfig.latitude,
-      longitude: asConfig.longitude === undefined ? 0 : asConfig.longitude,
-      exportAlertThresholds: asConfig.exportAlertThresholds === null ? [] : asConfig.exportAlertThresholds,
+      address: config.address,
+      hasBattery: config.hasBattery === undefined ? true : config.hasBattery,
+      showStrings: config.showStrings === undefined ? true : config.showStrings,
+      movingAverageHistoryLength: config.movingAverageHistoryLength === undefined ? 10 : config.movingAverageHistoryLength,
+      pollingFrequencySeconds: config.pollingFrequencySeconds === undefined ? 60 : config.pollingFrequencySeconds,
+      exportAlertThresholds: config.exportAlertThresholds === null ? [] : config.exportAlertThresholds,
       valueStrategy: maybeValueStrategy === undefined ? ValueStrategy.SimpleMovingAverage : maybeValueStrategy,
     };
   }
