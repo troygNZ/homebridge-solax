@@ -1,7 +1,6 @@
 import { APIEvent } from "homebridge";
 import type { API, StaticPlatformPlugin, Logger, AccessoryPlugin, PlatformConfig } from "homebridge";
 import util from "util";
-import { getSunrise, getSunset } from "sunrise-sunset-js";
 import { getValuesAsync } from "./solaxService";
 import Config, { ConfigHelper, ValueStrategy } from "./config";
 import WattsReadingAccessory from "./wattsReadingAccessory";
@@ -24,20 +23,16 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     this.config = ConfigHelper.applyDefaults(config, this.log);
 
     this.log.info(`Solax Host: ${this.config.address}`);
-    this.log.info(`Latitude: ${this.config.latitude}`);
-    this.log.info(`Longitude: ${this.config.longitude}`);
+    this.log.info(`Polling Freq in Seconds: ${this.config.pollingFrequencySeconds}`);
     this.log.info(`Export Alert Thresholds: [${this.config.exportAlertThresholds.join(",")}]`);
     this.log.info(`Battery: ${this.config.hasBattery}`);
     this.log.info(`Show Strings: ${this.config.showStrings}`);
     this.log.info(`Value Strategy: ${this.config.valueStrategy}`);
+    this.log.info(`Moving Average History Samples Length: ${this.config.movingAverageHistoryLength}`);
 
-    this.values = new InverterStateValuesFilter(this.log, this.config.valueStrategy);
+    this.values = new InverterStateValuesFilter(this.log, this.config.valueStrategy, this.config.movingAverageHistoryLength);
 
-    if (!this.config.latitude || !this.config.longitude) {
-      this.log.warn("Ideally longtitude and latitude values should be provided in order to provide accurate sunset and sunrise timings.");
-    }
-
-    this.log.debug("Finished initializing platform:", this.config.name);
+    this.log.debug("Finished initializing platform:", config.name);
 
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       log.debug("Executed didFinishLaunching callback");
@@ -63,27 +58,8 @@ export class SolaxPlatform implements StaticPlatformPlugin {
       this.log.debug(`Failed to read from Solax. Error: ${error}`);
     }
 
-    const delay = this.determineDelayMillis();
-    this.log.debug(`Delaying for ${delay} milliseconds.`);
-    this.sleep(delay).then(async () => await this.getLatestReadingsPeriodically());
-  }
-
-  determineDelayMillis(): number {
-    const now = new Date();
-    const sunrise = getSunrise(this.config.latitude, this.config.longitude);
-    const sunset = getSunset(this.config.latitude, this.config.longitude);
-
-    let delayMillis: number;
-    // If before dawn, then sleep till sunrise
-    if (now < sunrise && now >= sunset) {
-      //this.log.debug(`Reduced polling due to being outside of daylight hours. Sunrise = ${sunrise}, Sunset = ${sunset}`);
-      delayMillis = 60000;
-    } else {
-      // If between sunrise and sunset, we're in the daylight hours, then normal polling
-      delayMillis = 60000;
-    }
-
-    return delayMillis;
+    this.log.debug(`Delaying for ${this.config.pollingFrequencySeconds} seconds.`);
+    this.sleep(this.config.pollingFrequencySeconds * 1000).then(async () => await this.getLatestReadingsPeriodically());
   }
 
   /*

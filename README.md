@@ -33,8 +33,8 @@ npm install homebridge-solax
         "platform" : "SolaxHomebridgePlugin",
         "name" : "Solax Inverter",
         "address": "http://192.168.1.40",
-        "latitude": -36.804993,
-        "longitude": 175.132414,
+        "pollingFrequencySeconds": 60,
+        "movingAverageHistoryLength": 10,
         "exportAlertThresholds": [-5000, 0, 1000, 1500],
         "showStrings": true,
         "hasBattery": false,
@@ -45,15 +45,17 @@ npm install homebridge-solax
 
 **address**: The base hostname of your inverter connection dongle
 
-**latitude**: _Optional_: Specifies the latitude of your solar installation. Used to determining accurate Sunset and Sunrise times.
+**pollingFrequencySeconds**: _Optional_: Specifies how often to poll the Solax Inverter, and issue updates to HomeKit.
 
-**longitude**: _Optional_: Specifies the longitude of your solar installation. Used to determining accurate Sunset and Sunrise times.
+**movingAverageHistoryLength**: _Optional_: Specifies the number of samples to keep when using Averaging over time based value strategies. See valueStrategy
 
 **exportAlertThresholds**: _Optional_: Array of integers specifying the thresholds to create Alerts for. This will activate a motion trigger when the power export matches or exceeds the threshold value. Example: [-1000, 500, 2000] will create three motion sensors - "1000 watts imported", "500 watts exported" and "2000 watts exported".
 
 **showStrings**: _Optional_: Defaults to true. Shows Individual Inverter String metrics (PV1, PV2).
 
 **hasBattery**: _Optional_: Defaults to true. Experimental. Shows Battery information. Note, due to limited documentaiton from Solax, the Charging State is estimated based on the delta of Battery Watts.
+
+**valueStrategy**: _Optional_: Defaults to SimpleMovingAverage. LatestReading = use the latest values at each polling period, or SimpleMovingAverage for providing some smoothing of values, to handle scenarios like sporadic cloud/sun moments.
 
 ### Leveraging in Automations via Motion Sensor Accessories
 

@@ -18,23 +18,24 @@
         "format": "hostname",
         "default": ""
       },
-      "latitude": {
-        "title": "Latitude of the installation, used to calculate Sunrise and Sunet",
-        "type": "number",
-        "default": 0.0,
-        "maximum": 90,
-        "minimum": -90,
+
+      "pollingFrequencySeconds": {
+        "title": "Polling frequency in seconds.",
+        "type": "integer",
+        "default": 60,
+        "maximum": 600,
+        "minimum": 10,
         "required": false,
-        "description": "Defaults to 0"
+        "description": "Will directly influence how often the alerts and readings will update in homekit"
       },
-      "longitude": {
-        "title": "Longitude of the installation, used to calculate Sunrise and Sunet",
-        "type": "number",
-        "default": 0.0,
-        "maximum": 180,
-        "minimum": -180,
+      "movingAverageHistoryLength": {
+        "title": "How many records to retain for moving average calculations",
+        "type": "integer",
+        "default": 10,
+        "maximum": 100,
+        "minimum": 2,
         "required": false,
-        "description": "Defaults to 0"
+        "description": "Defaults to 10"
       },
       "exportAlertThresholds": {
         "title": "Export Alert Thresholds",
@@ -62,13 +63,12 @@
         "title": "The value strategy to apply",
         "type": "string",
         "required": false,
-        "default": "Simple",
+        "default": "SimpleMovingAverage",
         "description": "The filtering strategy to apply to the input readings.",
-        "items": {
-          "title": "Strategy",
-          "type": "string",
-          "enum": ["LatestReading", "SimpleMovingAverage"]
-        }
+        "oneOf": [
+          { "title": "Latest Reading", "enum": ["LatestReading"] },
+          { "title": "Simple Moving Average", "enum": ["SimpleMovingAverage"] }
+        ]
       }
     }
   }
