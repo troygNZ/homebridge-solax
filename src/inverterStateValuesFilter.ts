@@ -12,6 +12,7 @@ export default class InverterStateValuesFilter {
     pv1PowerWatts: 0,
     pv2PowerWatts: 0,
   };
+
   private static readonly joint = ",";
 
   private readonly inverterStateHistory: Array<InverterLiveMetrics>;
@@ -68,10 +69,10 @@ export default class InverterStateValuesFilter {
     ) {
       let logStringFn: () => string;
       if (history.length < 10) {
-        logStringFn = () => `${label}: Avg[${_.chain(history).map(mapper).join(",")}] = ${Math.round(result)}`;
+        logStringFn = () => `${label}: Avg[${_.chain(history).map(mapper).join(this.joint)}] = ${Math.round(result)}`;
       } else {
         logStringFn = () =>
-          `${label}: Avg[${_.chain(history).map(mapper).take(4).join(",")} ... ${_.chain(history)
+          `${label}: Avg[${_.chain(history).map(mapper).take(4).join(this.joint)} ... ${_.chain(history)
             .map(mapper)
             .takeRight(4)
             .join(",")}}] = ${Math.round(result)}`;
