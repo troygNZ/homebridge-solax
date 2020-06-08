@@ -12,6 +12,7 @@ export default class InverterStateValuesFilter {
     pv1PowerWatts: 0,
     pv2PowerWatts: 0,
   };
+
   private static readonly joint = ",";
 
   private readonly inverterStateHistory: Array<InverterLiveMetrics>;
@@ -52,25 +53,34 @@ export default class InverterStateValuesFilter {
 
   private static logAverageDetails(
     log: Logger,
+    debug: boolean,
     label: string,
     mapper: (record: InverterLiveMetrics) => number,
     history: Array<InverterLiveMetrics>,
     result: number
   ) {
     if (
+      // If we have a non 0 result, or any of the history for this metric is non-zero
       result !== 0 ||
       _.chain(history)
         .map(mapper)
         .some((x) => x !== 0)
         .value()
     ) {
-      if (history.length === 1) {
-        log.info(`${label}: Avg[${_.chain(history).map(mapper).first()}] = ${result}`);
-      } else if (history.length === 2) {
-        log.info(`${label}: Avg[${_.chain(history).map(mapper).first()},${_.chain(history).map(mapper).last()}] = ${result}`);
+      let logStringFn: () => string;
+      if (history.length < 10) {
+        logStringFn = () => `${label}: Avg[${_.chain(history).map(mapper).join(this.joint)}] = ${Math.round(result)}`;
       } else {
-        log.info(`${label}: Avg[${_.chain(history).map(mapper).first()} ... ${_.chain(history).map(mapper).last()}] = ${result}`);
-        log.debug(`${label}: Avg[${_.map(history, mapper).join(this.joint)}] = ${result}`);
+        logStringFn = () =>
+          `${label}: Avg[${_.chain(history).map(mapper).take(4).join(this.joint)} ... ${_.chain(history)
+            .map(mapper)
+            .takeRight(4)
+            .join(",")}}] = ${Math.round(result)}`;
+      }
+      if (debug) {
+        log.debug(logStringFn());
+      } else {
+        log.info(logStringFn());
       }
     }
   }
@@ -80,12 +90,12 @@ export default class InverterStateValuesFilter {
       return this.defaultValue;
     }
     const results = this.average(history);
-    this.logAverageDetails(log, "Exported Watts", (sample) => sample.exportedWatts, history, results.exportedWatts);
-    this.logAverageDetails(log, "Gen Watts", (sample) => sample.generationWatts, history, results.generationWatts);
-    this.logAverageDetails(log, "PV1 Watts", (sample) => sample.pv1PowerWatts, history, results.pv1PowerWatts);
-    this.logAverageDetails(log, "PV2 Watts", (sample) => sample.pv2PowerWatts, history, results.pv2PowerWatts);
-    this.logAverageDetails(log, "Batt Watts", (sample) => sample.batteryPowerWatts, history, results.batteryPowerWatts);
-    this.logAverageDetails(log, "Batt %", (sample) => sample.batteryPercentage, history, results.batteryPercentage);
+    this.logAverageDetails(log, false, "Exported Watts", (sample) => sample.exportedWatts, history, results.exportedWatts);
+    this.logAverageDetails(log, false, "Gen Watts", (sample) => sample.generationWatts, history, results.generationWatts);
+    this.logAverageDetails(log, true, "PV1 Watts", (sample) => sample.pv1PowerWatts, history, results.pv1PowerWatts);
+    this.logAverageDetails(log, true, "PV2 Watts", (sample) => sample.pv2PowerWatts, history, results.pv2PowerWatts);
+    this.logAverageDetails(log, true, "Batt Watts", (sample) => sample.batteryPowerWatts, history, results.batteryPowerWatts);
+    this.logAverageDetails(log, true, "Batt %", (sample) => sample.batteryPercentage, history, results.batteryPercentage);
     return results;
   }
 
