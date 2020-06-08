@@ -68,7 +68,7 @@ export default class InverterStateValuesFilter {
         .value()
     ) {
       let logStringFn: () => string;
-      if (history.length < 10) {
+      if (history.length <= 10) {
         logStringFn = () => `${label}: Avg[${_.chain(history).map(mapper).join(this.joint)}] = ${Math.round(result)}`;
       } else {
         logStringFn = () =>
@@ -92,10 +92,7 @@ export default class InverterStateValuesFilter {
     const results = this.average(history);
     this.logAverageDetails(log, false, "Exported Watts", (sample) => sample.exportedWatts, history, results.exportedWatts);
     this.logAverageDetails(log, false, "Gen Watts", (sample) => sample.generationWatts, history, results.generationWatts);
-    this.logAverageDetails(log, true, "PV1 Watts", (sample) => sample.pv1PowerWatts, history, results.pv1PowerWatts);
-    this.logAverageDetails(log, true, "PV2 Watts", (sample) => sample.pv2PowerWatts, history, results.pv2PowerWatts);
-    this.logAverageDetails(log, true, "Batt Watts", (sample) => sample.batteryPowerWatts, history, results.batteryPowerWatts);
-    this.logAverageDetails(log, true, "Batt %", (sample) => sample.batteryPercentage, history, results.batteryPercentage);
+
     return results;
   }
 
