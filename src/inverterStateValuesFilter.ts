@@ -101,7 +101,7 @@ export default class InverterStateValuesFilter {
     if (history.length === 0) {
       return this.defaultValue;
     }
-    let k = 2 / (history.length + 1);
+    const k = 2 / (history.length + 1);
     // first item is just the same as the first item in the input
     const results = [history[0]];
     // for the rest of the items, they are computed with the previous one
