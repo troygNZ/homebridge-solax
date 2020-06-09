@@ -34,7 +34,6 @@ export default class InverterStateValuesFilter {
       this.inverterStateHistory.shift();
     }
     this.computedValues = InverterStateValuesFilter.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
-    //this.log.debug(`Calculated values: ${JSON.stringify(this.computedValues, null, "  ")}`);
   }
 
   private static computeValues(valueStrategy: ValueStrategy, history: Array<InverterLiveMetrics>, log: Logger): InverterLiveMetrics {

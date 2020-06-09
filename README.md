@@ -55,7 +55,7 @@ npm install homebridge-solax
 
 **hasBattery**: _Optional_: Defaults to true. Experimental. Shows Battery information. Note, due to limited documentaiton from Solax, the Charging State is estimated based on the delta of Battery Watts.
 
-**valueStrategy**: _Optional_: Defaults to SimpleMovingAverage. LatestReading = use the latest values at each polling period, or SimpleMovingAverage for providing some smoothing of values, to handle scenarios like sporadic cloud/sun moments.
+**valueStrategy**: _Optional_: Defaults to SimpleMovingAverage. LatestReading = use the latest values at each polling period, SimpleMovingAverage for providing some smoothing of values, to handle scenarios like sporadic cloud/sun moments. Averages over the entire history. ExpoentialMovingAverage = Use standard Exponential Moving Average calculation to provide a smoothed last value. Refer to movingAverageHistoryLength for Moving Average based history tuning.
 
 ### Leveraging in Automations via Motion Sensor Accessories
 
