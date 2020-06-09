@@ -14,7 +14,7 @@ export default interface Config {
 export enum ValueStrategy {
   LatestReading = "Latest Reading",
   SimpleMovingAverage = "Simple Moving Average",
-  //ExponentialMovingAverage,
+  ExponentialMovingAverage = "Exponential Moving Average",
 }
 
 export class ConfigHelper {
