@@ -67,7 +67,8 @@
         "description": "The filtering strategy to apply to the input readings.",
         "oneOf": [
           { "title": "Latest Reading", "enum": ["LatestReading"] },
-          { "title": "Simple Moving Average", "enum": ["SimpleMovingAverage"] }
+          { "title": "Simple Moving Average", "enum": ["SimpleMovingAverage"] },
+          { "title": "Exponential Moving Average", "enum": ["ExponentialMovingAverage"] }
         ]
       }
     }
