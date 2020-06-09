@@ -58,7 +58,8 @@ export default class InverterStateValuesFilter {
     label: string,
     mapper: (record: InverterLiveMetrics) => number,
     history: Array<InverterLiveMetrics>,
-    result: number
+    result: number,
+    suffix: string
   ) {
     if (
       // If we have a non 0 result, or any of the history for this metric is non-zero
@@ -70,13 +71,13 @@ export default class InverterStateValuesFilter {
     ) {
       let logStringFn: () => string;
       if (history.length <= 10) {
-        logStringFn = () => `${label}: [${_.chain(history).map(mapper).join(this.joint)}] = ${Math.round(result)}`;
+        logStringFn = () => `${label}: [${_.chain(history).map(mapper).join(this.joint)}] = ${Math.round(result)}${suffix}`;
       } else {
         logStringFn = () =>
           `${label}: [${_.chain(history).map(mapper).take(4).join(this.joint)} ... ${_.chain(history)
             .map(mapper)
             .takeRight(4)
-            .join(",")}}] = ${Math.round(result)}`;
+            .join(",")}}] = ${Math.round(result)}${suffix}`;
       }
       if (debug) {
         log.debug(logStringFn());
@@ -91,8 +92,8 @@ export default class InverterStateValuesFilter {
       return this.defaultValue;
     }
     const results = this.average(history);
-    this.logAverageDetails(log, false, "Exported Watts", (sample) => sample.exportedWatts, history, results.exportedWatts);
-    this.logAverageDetails(log, false, "Gen Watts", (sample) => sample.generationWatts, history, results.generationWatts);
+    this.logAverageDetails(log, false, "Exported Watts", (sample) => sample.exportedWatts, history, results.exportedWatts, "");
+    this.logAverageDetails(log, false, "Gen Watts", (sample) => sample.generationWatts, history, results.generationWatts, "");
 
     return results;
   }
@@ -119,10 +120,26 @@ export default class InverterStateValuesFilter {
 
     const lastItem = results[results.length - 1];
     const smaResult = this.average(history);
-    this.logAverageDetails(log, true, "Exported Watts Input", (sample) => sample.exportedWatts, history, smaResult.exportedWatts);
-    this.logAverageDetails(log, true, "Gen Watts Input", (sample) => sample.generationWatts, history, smaResult.generationWatts);
-    this.logAverageDetails(log, false, "Exported Watts EMA", (sample) => sample.exportedWatts, history, lastItem.exportedWatts);
-    this.logAverageDetails(log, false, "Gen Watts EMA", (sample) => sample.generationWatts, history, lastItem.generationWatts);
+
+    this.logAverageDetails(
+      log,
+      false,
+      "Exported Watts EMA",
+      (sample) => sample.exportedWatts,
+      history,
+      lastItem.exportedWatts,
+      ` (SMA = ${Math.round(smaResult.exportedWatts)})`
+    );
+
+    this.logAverageDetails(
+      log,
+      false,
+      "Gen Watts EMA",
+      (sample) => sample.generationWatts,
+      history,
+      lastItem.generationWatts,
+      ` (SMA = ${Math.round(smaResult.generationWatts)})`
+    );
 
     return lastItem;
   }
