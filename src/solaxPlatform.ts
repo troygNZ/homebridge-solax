@@ -1,13 +1,15 @@
 import { APIEvent } from "homebridge";
-import type { API, StaticPlatformPlugin, Logger, AccessoryPlugin, PlatformConfig } from "homebridge";
+import type { API, PlatformAccessory, StaticPlatformPlugin, Logger, AccessoryPlugin, PlatformConfig } from "homebridge";
+import { , Categories } from "homebridge";
 import util from "util";
 import { getValuesAsync } from "./solaxService";
 import Config, { ConfigHelper, ValueStrategy } from "./config";
 import WattsReadingAccessory from "./wattsReadingAccessory";
+import SolarSnapshopCameraAccessory from "./solarSnapshopCameraAccessory";
 import PowerThresholdMotionSensor from "./powerThresholdMotionSensor";
-import SolarBattery from "./solarBattery";
+import SolarBattery from "./solarBatteryAccessory";
 import { EventEmitter } from "events";
-import InverterStateValuesFilter from "./inverterStateValuesFilter";
+import InverterStateValuesFilter from "./inverterStateHistoryProvider";
 import _ from "lodash";
 
 export class InverterStateEmitter extends EventEmitter {}
@@ -71,24 +73,24 @@ export class SolaxPlatform implements StaticPlatformPlugin {
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
     const accessories: AccessoryPlugin[] = [
       new WattsReadingAccessory(this.api.hap, this.log, "Exported Watts", this.inverterStateEmitter, () => {
-        const result = this.values.getValues().exportedWatts;
+        const result = this.values.getFilteredValues().exportedWatts;
         return result >= 0 ? result : 0;
       }),
 
       new WattsReadingAccessory(this.api.hap, this.log, "Imported Watts", this.inverterStateEmitter, () => {
-        const result = this.values.getValues().exportedWatts;
+        const result = this.values.getFilteredValues().exportedWatts;
         return result < 0 ? Math.abs(result) : 0;
       }),
 
       new WattsReadingAccessory(this.api.hap, this.log, "Power Gen Watts", this.inverterStateEmitter, () => {
-        return this.values.getValues().generationWatts;
+        return this.values.getFilteredValues().generationWatts;
       }),
     ];
 
     let battery = null;
     if (this.config.hasBattery) {
       const getDetails = () => {
-        const result = this.values.getValues();
+        const result = this.values.getFilteredValues();
         return {
           batteryPercentage: result.batteryPercentage,
           batteryWatts: result.batteryPowerWatts,
@@ -100,11 +102,11 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     const inverterStrings = this.config.showStrings
       ? [
           new WattsReadingAccessory(this.api.hap, this.log, "PV1 Watts", this.inverterStateEmitter, () => {
-            return this.values.getValues().pv1PowerWatts;
+            return this.values.getFilteredValues().pv1PowerWatts;
           }),
 
           new WattsReadingAccessory(this.api.hap, this.log, "PV2 Watts", this.inverterStateEmitter, () => {
-            return this.values.getValues().pv2PowerWatts;
+            return this.values.getFilteredValues().pv2PowerWatts;
           }),
         ]
       : [];
@@ -115,20 +117,55 @@ export class SolaxPlatform implements StaticPlatformPlugin {
 
       if (threshold < 0) {
         name = `${Math.abs(threshold)} watts imported`;
-        evalutation = () => this.values.getValues().exportedWatts <= threshold;
+        evalutation = () => this.values.getFilteredValues().exportedWatts <= threshold;
       } else {
         name = `${threshold} watts exported`;
-        evalutation = () => this.values.getValues().exportedWatts >= threshold;
+        evalutation = () => this.values.getFilteredValues().exportedWatts >= threshold;
       }
 
       return new PowerThresholdMotionSensor(this.api.hap, this.log, name, this.inverterStateEmitter, evalutation);
     });
+
+    const uuid = this.api.hap.uuid.generate("Solar Metrics History");
+    const cameraAccessory = new PlatformAccessory("Solar Metrics History", uuid, Categories.CAMERA);
+    // const cameraAccessoryInfo = cameraAccessory.getService(this.Service.AccessoryInformation);
+    // cameraAccessoryInfo.setCharacteristic(this.Characteristic.Manufacturer, "Ubiquiti");
+    // cameraAccessoryInfo.setCharacteristic(this.Characteristic.Model, camera.type);
+    // cameraAccessoryInfo.setCharacteristic(this.Characteristic.SerialNumber, camera.id);
+    // cameraAccessoryInfo.setCharacteristic(this.Characteristic.FirmwareRevision, camera.firmware);
+
+    // cameraAccessory.context.id = camera.id;
+    // cameraAccessory.context.motionEnabled = true;
+    // cameraAccessory.context.lastMotionId = null;
+    // cameraAccessory.context.lastMotionIdRepeatCount = 0;
+    // cameraAccessory.addService(new this.Service.MotionSensor(camera.name + " Motion sensor"));
+    // cameraAccessory.addService(new this.Service.Switch(camera.name + " Motion enabled"));
+    // cameraAccessory
+    //   .getService(this.Service.Switch)
+    //   .getCharacteristic(this.Characteristic.On)
+    //   .on(this.api.hap.CharacteristicEventTypes.GET, (callback: Function) => {
+    //     callback(null, cameraAccessory.context.motionEnabled);
+    //   })
+    //   .on(this.api.hap.CharacteristicEventTypes.SET, (value: boolean, callback: Function) => {
+    //     cameraAccessory.context.motionEnabled = value;
+    //     infoLogger("Motion detection for " + camera.name + " has been turned " + (cameraAccessory.context.motionEnabled ? "ON" : "OFF"));
+    //     callback();
+    //   });
+
+    // const cameraSnapshotCamera = new SolarSnapshopCameraAccessory(
+    //   this.api.hap,
+    //   this.log,
+    //   "Solar Metrics History",
+    //   this.inverterStateEmitter,
+    //   () => this.values.getFilteredValues()
+    // );
 
     return callback(
       accessories
         .concat(exportAlarms)
         .concat(battery === null ? [] : battery)
         .concat(inverterStrings)
+        .concat(cameraAccessory)
     );
   }
 }

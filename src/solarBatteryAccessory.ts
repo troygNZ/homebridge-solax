@@ -5,7 +5,7 @@ export interface BatteryDetails {
   batteryPercentage: number;
   batteryWatts: number;
 }
-export default class SolarBattery implements AccessoryPlugin {
+export default class SolarBatteryAccessory implements AccessoryPlugin {
   private readonly service: Service;
   private readonly informationService: Service;
   private previousWatts: number | null;

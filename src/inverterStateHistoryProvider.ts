@@ -1,9 +1,9 @@
-import { InverterLiveMetrics } from "./solaxService";
+import InverterLiveMetrics from "./InverterLiveMetrics";
 import type { Logger } from "homebridge";
 import _ from "lodash";
 import { ValueStrategy } from "./config";
 
-export default class InverterStateValuesFilter {
+export default class InverterStateHistoryProvider {
   private static defaultValue: InverterLiveMetrics = {
     batteryPercentage: 0,
     batteryPowerWatts: 0,
@@ -24,7 +24,7 @@ export default class InverterStateValuesFilter {
     public readonly movingAverageHistoryLength: number
   ) {
     this.inverterStateHistory = new Array<InverterLiveMetrics>();
-    this.computedValues = InverterStateValuesFilter.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
+    this.computedValues = InverterStateHistoryProvider.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
   }
 
   addReadings(metrics: InverterLiveMetrics): void {
@@ -33,7 +33,7 @@ export default class InverterStateValuesFilter {
     while (this.inverterStateHistory.length > this.movingAverageHistoryLength) {
       this.inverterStateHistory.shift();
     }
-    this.computedValues = InverterStateValuesFilter.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
+    this.computedValues = InverterStateHistoryProvider.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
   }
 
   private static computeValues(valueStrategy: ValueStrategy, history: Array<InverterLiveMetrics>, log: Logger): InverterLiveMetrics {
@@ -48,7 +48,7 @@ export default class InverterStateValuesFilter {
     }
   }
 
-  getValues(): InverterLiveMetrics {
+  getFilteredValues(): InverterLiveMetrics {
     return this.computedValues;
   }
 
@@ -77,7 +77,7 @@ export default class InverterStateValuesFilter {
           `${label}: [${_.chain(history).map(mapper).take(4).join(this.joint)} ... ${_.chain(history)
             .map(mapper)
             .takeRight(4)
-            .join(",")}}] = ${Math.round(result)}${suffix}`;
+            .join(",")}] = ${Math.round(result)}${suffix}`;
       }
       if (debug) {
         log.debug(logStringFn());
