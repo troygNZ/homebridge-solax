@@ -2,12 +2,12 @@ import { APIEvent } from "homebridge";
 import type { API, StaticPlatformPlugin, Logger, AccessoryPlugin, PlatformConfig } from "homebridge";
 import util from "util";
 import { getValuesAsync } from "./solaxService";
-import Config, { ConfigHelper, ValueStrategy } from "./config";
+import Config, { ConfigHelper } from "./config";
 import WattsReadingAccessory from "./wattsReadingAccessory";
 import PowerThresholdMotionSensor from "./powerThresholdMotionSensor";
 import SolarBattery from "./solarBattery";
 import { EventEmitter } from "events";
-import InverterStateValuesFilter from "./inverterStateValuesFilter";
+import InverterMetricsHistory from "./inverterMetricsHistory";
 import _ from "lodash";
 
 export class InverterStateEmitter extends EventEmitter {}
@@ -15,7 +15,7 @@ export class InverterStateEmitter extends EventEmitter {}
 export class SolaxPlatform implements StaticPlatformPlugin {
   public readonly inverterStateEmitter = new InverterStateEmitter();
   public readonly config: Config;
-  public readonly values: InverterStateValuesFilter;
+  public readonly history: InverterMetricsHistory;
 
   constructor(public readonly log: Logger, config: PlatformConfig, public readonly api: API) {
     this.inverterStateEmitter.setMaxListeners(15);
@@ -30,7 +30,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     this.log.info(`Value Strategy: ${this.config.valueStrategy}`);
     this.log.info(`Moving Average History Samples Length: ${this.config.movingAverageHistoryLength}`);
 
-    this.values = new InverterStateValuesFilter(this.log, this.config.valueStrategy, this.config.movingAverageHistoryLength);
+    this.history = new InverterMetricsHistory(this.log, this.config.valueStrategy, this.config.movingAverageHistoryLength);
 
     this.log.debug("Finished initializing platform:", config.name);
 
@@ -51,7 +51,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
       this.log.debug("Battery Power: " + inverterState.batteryPowerWatts);
       this.log.debug("PV1: " + inverterState.pv1PowerWatts);
       this.log.debug("PV2: " + inverterState.pv2PowerWatts);
-      this.values.addReadings(inverterState);
+      this.history.addReadings(inverterState);
 
       this.inverterStateEmitter.emit("event");
     } catch (error) {
@@ -71,24 +71,24 @@ export class SolaxPlatform implements StaticPlatformPlugin {
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
     const accessories: AccessoryPlugin[] = [
       new WattsReadingAccessory(this.api.hap, this.log, "Exported Watts", this.inverterStateEmitter, () => {
-        const result = this.values.getValues().exportedWatts;
+        const result = this.history.getFilteredValues().exportedWatts;
         return result >= 0 ? result : 0;
       }),
 
       new WattsReadingAccessory(this.api.hap, this.log, "Imported Watts", this.inverterStateEmitter, () => {
-        const result = this.values.getValues().exportedWatts;
+        const result = this.history.getFilteredValues().exportedWatts;
         return result < 0 ? Math.abs(result) : 0;
       }),
 
       new WattsReadingAccessory(this.api.hap, this.log, "Power Gen Watts", this.inverterStateEmitter, () => {
-        return this.values.getValues().generationWatts;
+        return this.history.getFilteredValues().generationWatts;
       }),
     ];
 
     let battery = null;
     if (this.config.hasBattery) {
       const getDetails = () => {
-        const result = this.values.getValues();
+        const result = this.history.getFilteredValues();
         return {
           batteryPercentage: result.batteryPercentage,
           batteryWatts: result.batteryPowerWatts,
@@ -100,11 +100,11 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     const inverterStrings = this.config.showStrings
       ? [
           new WattsReadingAccessory(this.api.hap, this.log, "PV1 Watts", this.inverterStateEmitter, () => {
-            return this.values.getValues().pv1PowerWatts;
+            return this.history.getFilteredValues().pv1PowerWatts;
           }),
 
           new WattsReadingAccessory(this.api.hap, this.log, "PV2 Watts", this.inverterStateEmitter, () => {
-            return this.values.getValues().pv2PowerWatts;
+            return this.history.getFilteredValues().pv2PowerWatts;
           }),
         ]
       : [];
@@ -115,10 +115,10 @@ export class SolaxPlatform implements StaticPlatformPlugin {
 
       if (threshold < 0) {
         name = `${Math.abs(threshold)} watts imported`;
-        evalutation = () => this.values.getValues().exportedWatts <= threshold;
+        evalutation = () => this.history.getFilteredValues().exportedWatts <= threshold;
       } else {
         name = `${threshold} watts exported`;
-        evalutation = () => this.values.getValues().exportedWatts >= threshold;
+        evalutation = () => this.history.getFilteredValues().exportedWatts >= threshold;
       }
 
       return new PowerThresholdMotionSensor(this.api.hap, this.log, name, this.inverterStateEmitter, evalutation);

@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import _ from "lodash";
 import { Logger } from "homebridge/lib/logger";
 import Config from "./config";
+import { InverterMetrics } from "./inverterMetrics";
 
 enum LiveDatastreamFields {
   PV1Current = 1,
@@ -33,7 +34,7 @@ enum LiveDatastreamFields {
   Status = 69,
 }
 
-export const getValuesAsync = async (log: Logger, config: Config): Promise<InverterLiveMetrics> => {
+export const getValuesAsync = async (log: Logger, config: Config): Promise<InverterMetrics> => {
   try {
     const response = await fetch(`${config.address}/api/realTimeData.htm`);
     const bodyText = await response.text();
@@ -76,12 +77,3 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
     throw error;
   }
 };
-
-export interface InverterLiveMetrics {
-  generationWatts: number;
-  exportedWatts: number;
-  batteryPercentage: number;
-  batteryPowerWatts: number;
-  pv1PowerWatts: number;
-  pv2PowerWatts: number;
-}
