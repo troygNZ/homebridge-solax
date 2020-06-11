@@ -1,10 +1,10 @@
-import { InverterLiveMetrics } from "./solaxService";
+import { InverterMetrics } from "./inverterMetrics";
 import type { Logger } from "homebridge";
 import _ from "lodash";
 import { ValueStrategy } from "./config";
 
-export default class InverterStateValuesFilter {
-  private static defaultValue: InverterLiveMetrics = {
+export default class InverterMetricsHistory {
+  private static defaultValue: InverterMetrics = {
     batteryPercentage: 0,
     batteryPowerWatts: 0,
     exportedWatts: 0,
@@ -15,28 +15,46 @@ export default class InverterStateValuesFilter {
 
   private static readonly joint = ",";
 
-  private readonly inverterStateHistory: Array<InverterLiveMetrics>;
-  private computedValues: InverterLiveMetrics;
+  private readonly inverterStateHistory: Array<InverterMetrics>;
+  private computedValues: InverterMetrics;
+  private addedRecordCount = 0;
 
   constructor(
     public readonly log: Logger,
     public readonly valueStrategy: ValueStrategy,
     public readonly movingAverageHistoryLength: number
   ) {
-    this.inverterStateHistory = new Array<InverterLiveMetrics>();
-    this.computedValues = InverterStateValuesFilter.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
+    this.inverterStateHistory = new Array<InverterMetrics>();
+    this.computedValues = InverterMetricsHistory.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
   }
 
-  addReadings(metrics: InverterLiveMetrics): void {
+  addReadings(metrics: InverterMetrics): void {
     this.log.debug(`Latest readings added: ${JSON.stringify(metrics, null, "  ")}`);
+    this.addedRecordCount++;
+
     this.inverterStateHistory.push(metrics);
+    this.log.info(`Added new metrics. PowerGenWatts=${metrics.generationWatts} ExportedWatts=${metrics.exportedWatts}`);
     while (this.inverterStateHistory.length > this.movingAverageHistoryLength) {
       this.inverterStateHistory.shift();
     }
-    this.computedValues = InverterStateValuesFilter.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
+
+    if (this.addedRecordCount % Math.round(this.movingAverageHistoryLength / 2) === 0) {
+      this.log.info(
+        `Generation Watts Raw History: [${_.chain(this.inverterStateHistory)
+          .map((x) => x.generationWatts)
+          .join(InverterMetricsHistory.joint)}]`
+      );
+      this.log.info(
+        `Exported Watts Raw History:   [${_.chain(this.inverterStateHistory)
+          .map((x) => x.exportedWatts)
+          .join(InverterMetricsHistory.joint)}]`
+      );
+    }
+
+    this.computedValues = InverterMetricsHistory.computeValues(this.valueStrategy, this.inverterStateHistory, this.log);
   }
 
-  private static computeValues(valueStrategy: ValueStrategy, history: Array<InverterLiveMetrics>, log: Logger): InverterLiveMetrics {
+  private static computeValues(valueStrategy: ValueStrategy, history: Array<InverterMetrics>, log: Logger): InverterMetrics {
     switch (valueStrategy) {
       case ValueStrategy.ExponentialMovingAverage:
         return this.computeExponentialMovingAverage(history, log);
@@ -48,57 +66,25 @@ export default class InverterStateValuesFilter {
     }
   }
 
-  getValues(): InverterLiveMetrics {
+  getFilteredValues(): InverterMetrics {
     return this.computedValues;
   }
 
-  private static logAverageDetails(
-    log: Logger,
-    debug: boolean,
-    label: string,
-    mapper: (record: InverterLiveMetrics) => number,
-    history: Array<InverterLiveMetrics>,
-    result: number,
-    suffix: string
-  ) {
-    if (
-      // If we have a non 0 result, or any of the history for this metric is non-zero
-      result !== 0 ||
-      _.chain(history)
-        .map(mapper)
-        .some((x) => x !== 0)
-        .value()
-    ) {
-      let logStringFn: () => string;
-      if (history.length <= 10) {
-        logStringFn = () => `${label}: [${_.chain(history).map(mapper).join(this.joint)}] = ${Math.round(result)}${suffix}`;
-      } else {
-        logStringFn = () =>
-          `${label}: [${_.chain(history).map(mapper).take(4).join(this.joint)} ... ${_.chain(history)
-            .map(mapper)
-            .takeRight(4)
-            .join(",")}}] = ${Math.round(result)}${suffix}`;
-      }
-      if (debug) {
-        log.debug(logStringFn());
-      } else {
-        log.info(logStringFn());
-      }
-    }
-  }
-
-  private static computeSimpleMovingAverage(history: Array<InverterLiveMetrics>, log: Logger) {
+  private static computeSimpleMovingAverage(history: Array<InverterMetrics>, log: Logger) {
     if (history.length === 0) {
       return this.defaultValue;
     }
     const results = this.average(history);
-    this.logAverageDetails(log, false, "Exported Watts", (sample) => sample.exportedWatts, history, results.exportedWatts, "");
-    this.logAverageDetails(log, false, "Gen Watts", (sample) => sample.generationWatts, history, results.generationWatts, "");
-
+    if (results.generationWatts !== 0) {
+      log.info(`Gen Watts Avg      = ${Math.round(results.generationWatts)}`);
+    }
+    if (results.exportedWatts !== 0) {
+      log.info(`Exported Watts Avg = ${Math.round(results.exportedWatts)}`);
+    }
     return results;
   }
 
-  private static computeExponentialMovingAverage(history: Array<InverterLiveMetrics>, log: Logger) {
+  private static computeExponentialMovingAverage(history: Array<InverterMetrics>, log: Logger) {
     if (history.length === 0) {
       return this.defaultValue;
     }
@@ -120,32 +106,17 @@ export default class InverterStateValuesFilter {
 
     const lastItem = results[results.length - 1];
     const smaResult = this.average(history);
-
-    this.logAverageDetails(
-      log,
-      false,
-      "Exported Watts EMA",
-      (sample) => sample.exportedWatts,
-      history,
-      lastItem.exportedWatts,
-      ` (SMA = ${Math.round(smaResult.exportedWatts)})`
-    );
-
-    this.logAverageDetails(
-      log,
-      false,
-      "Gen Watts EMA",
-      (sample) => sample.generationWatts,
-      history,
-      lastItem.generationWatts,
-      ` (SMA = ${Math.round(smaResult.generationWatts)})`
-    );
-
+    if (lastItem.generationWatts !== 0 || smaResult.generationWatts !== 0) {
+      log.info(`Gen Watts EMA      = ${Math.round(lastItem.generationWatts)} (SMA = ${Math.round(smaResult.generationWatts)})`);
+    }
+    if (lastItem.exportedWatts !== 0 || smaResult.exportedWatts !== 0) {
+      log.info(`Exported Watts EMA = ${Math.round(lastItem.exportedWatts)} (SMA = ${Math.round(smaResult.exportedWatts)})`);
+    }
     return lastItem;
   }
 
-  private static sum(metrics: InverterLiveMetrics[]): InverterLiveMetrics {
-    return _.reduce<InverterLiveMetrics, InverterLiveMetrics>(
+  private static sum(metrics: InverterMetrics[]): InverterMetrics {
+    return _.reduce<InverterMetrics, InverterMetrics>(
       metrics,
       (a, b) => {
         return {
@@ -161,7 +132,7 @@ export default class InverterStateValuesFilter {
     );
   }
 
-  private static average(metrics: InverterLiveMetrics[]): InverterLiveMetrics {
+  private static average(metrics: InverterMetrics[]): InverterMetrics {
     const summedResults = this.sum(metrics);
     return {
       batteryPercentage: summedResults.batteryPercentage / metrics.length,
