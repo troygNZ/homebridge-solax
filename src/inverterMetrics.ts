@@ -1,4 +1,5 @@
 export interface InverterMetrics {
+  timestamp: Date;
   generationWatts: number;
   exportedWatts: number;
   batteryPercentage: number;
