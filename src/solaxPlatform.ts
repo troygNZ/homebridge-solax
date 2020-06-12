@@ -42,7 +42,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     if (this.config.pollingFrequencySeconds * 4 < diffSeconds) {
       this.log.warn(
         `Detected data hasn't been updated for ${diffSeconds} seconds.
-         Where the polling frequency is ${this.config.pollingFrequencySeconds} seconds. Kicking it in the guts!`
+Where the polling frequency is ${this.config.pollingFrequencySeconds} seconds. Kicking it in the guts!`
       );
       await this.getLatestReadingsPeriodically();
     }
@@ -52,14 +52,13 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     try {
       const inverterState = await getValuesAsync(this.log, this.config);
       this.history.addReadings(inverterState);
-
       this.inverterStateEmitter.emit("event");
     } catch (error) {
-      this.log.debug(`Failed to read from Solax. Error: ${error}`);
+      this.log.error(`Failed to read from Solax. Error: ${error}`);
+    } finally {
+      this.log.debug(`Delaying for ${this.config.pollingFrequencySeconds} seconds.`);
+      this.sleep(this.config.pollingFrequencySeconds * 1000).then(async () => await this.getLatestReadingsPeriodically());
     }
-
-    this.log.debug(`Delaying for ${this.config.pollingFrequencySeconds} seconds.`);
-    this.sleep(this.config.pollingFrequencySeconds * 1000).then(async () => await this.getLatestReadingsPeriodically());
   }
 
   /*
