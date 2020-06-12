@@ -64,7 +64,16 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
         pv2PowerWatts = parseInt(dataItem);
       }
     });
+
+    log.debug("Power Gen: " + genPower);
+    log.debug("Export: " + exportPower);
+    log.debug("Battery Percentage: " + batteryPercentage);
+    log.debug("Battery Power: " + batteryPowerWatts);
+    log.debug("PV1: " + pv1PowerWatts);
+    log.debug("PV2: " + pv2PowerWatts);
+
     return {
+      timestamp: new Date(),
       generationWatts: genPower ?? 0,
       exportedWatts: exportPower ?? 0,
       batteryPercentage: batteryPercentage ?? 0,
@@ -73,7 +82,7 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
       pv2PowerWatts: pv2PowerWatts ?? 0,
     };
   } catch (error) {
-    log.debug(`That did not go well. Error: ${error}`);
+    log.error(`That did not go well. Error: ${error}`);
     throw error;
   }
 };

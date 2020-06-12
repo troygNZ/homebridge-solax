@@ -18,6 +18,15 @@ export enum ValueStrategy {
 }
 
 export class ConfigHelper {
+  static logDetails(log: Logger, config: Config) {
+    log.info(`Solax Host: ${config.address}`);
+    log.info(`Polling Freq in Seconds: ${config.pollingFrequencySeconds}`);
+    log.info(`Export Alert Thresholds: [${config.exportAlertThresholds.join(",")}]`);
+    log.info(`Battery: ${config.hasBattery}`);
+    log.info(`Show Strings: ${config.showStrings}`);
+    log.info(`Value Strategy: ${config.valueStrategy}`);
+    log.info(`Moving Average History Samples Length: ${config.movingAverageHistoryLength}`);
+  }
   static applyDefaults(config: PlatformConfig, log: Logger): Config {
     const maybeValueStrategy: ValueStrategy | undefined = (ValueStrategy as any)[config.valueStrategy];
     if (maybeValueStrategy === undefined && config.valueStrategy !== undefined) {

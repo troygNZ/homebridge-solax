@@ -21,36 +21,35 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     this.inverterStateEmitter.setMaxListeners(15);
     this.log.debug(`Config: \n${JSON.stringify(config, null, "  ")}`);
     this.config = ConfigHelper.applyDefaults(config, this.log);
-
-    this.log.info(`Solax Host: ${this.config.address}`);
-    this.log.info(`Polling Freq in Seconds: ${this.config.pollingFrequencySeconds}`);
-    this.log.info(`Export Alert Thresholds: [${this.config.exportAlertThresholds.join(",")}]`);
-    this.log.info(`Battery: ${this.config.hasBattery}`);
-    this.log.info(`Show Strings: ${this.config.showStrings}`);
-    this.log.info(`Value Strategy: ${this.config.valueStrategy}`);
-    this.log.info(`Moving Average History Samples Length: ${this.config.movingAverageHistoryLength}`);
+    ConfigHelper.logDetails(this.log, this.config);
 
     this.history = new InverterMetricsHistory(this.log, this.config.valueStrategy, this.config.movingAverageHistoryLength);
-
     this.log.debug("Finished initializing platform:", config.name);
 
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       log.debug("Executed didFinishLaunching callback");
       this.sleep(5000).then(async () => await this.getLatestReadingsPeriodically());
+      setInterval(() => this.checkForStalledTimeout(), this.config.pollingFrequencySeconds * 1000 * 2);
     });
   }
 
   sleep = util.promisify(setTimeout);
-  async getLatestReadingsPeriodically() {
+
+  private async checkForStalledTimeout() {
+    const latestRaw = this.history.getLatestRawValues();
+    const now = new Date();
+    const diffSeconds = (now.getTime() - latestRaw.timestamp.getTime()) / 1000;
+    if (this.config.pollingFrequencySeconds * 4 < diffSeconds) {
+      this.log.warn(
+        `Detected data hasn't been updated for ${diffSeconds} seconds. Where the polling frequency is ${this.config.pollingFrequencySeconds} seconds. Kicking it in the guts!`
+      );
+      await this.getLatestReadingsPeriodically();
+    }
+  }
+
+  private async getLatestReadingsPeriodically() {
     try {
       const inverterState = await getValuesAsync(this.log, this.config);
-
-      this.log.debug("Power Gen: " + inverterState.generationWatts);
-      this.log.debug("Export: " + inverterState.exportedWatts);
-      this.log.debug("Battery Percentage: " + inverterState.batteryPercentage);
-      this.log.debug("Battery Power: " + inverterState.batteryPowerWatts);
-      this.log.debug("PV1: " + inverterState.pv1PowerWatts);
-      this.log.debug("PV2: " + inverterState.pv2PowerWatts);
       this.history.addReadings(inverterState);
 
       this.inverterStateEmitter.emit("event");
@@ -59,7 +58,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     }
 
     this.log.debug(`Delaying for ${this.config.pollingFrequencySeconds} seconds.`);
-    this.sleep(this.config.pollingFrequencySeconds * 1000).then(async () => await this.getLatestReadingsPeriodically());
+    //this.sleep(this.config.pollingFrequencySeconds * 1000).then(async () => await this.getLatestReadingsPeriodically());
   }
 
   /*

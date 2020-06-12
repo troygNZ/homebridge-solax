@@ -5,6 +5,7 @@ import { ValueStrategy } from "./config";
 
 export default class InverterMetricsHistory {
   private static defaultValue: InverterMetrics = {
+    timestamp: new Date(),
     batteryPercentage: 0,
     batteryPowerWatts: 0,
     exportedWatts: 0,
@@ -70,6 +71,10 @@ export default class InverterMetricsHistory {
     return this.computedValues;
   }
 
+  getLatestRawValues(): InverterMetrics {
+    return _.last(this.inverterStateHistory) ?? InverterMetricsHistory.defaultValue;
+  }
+
   private static computeSimpleMovingAverage(history: Array<InverterMetrics>, log: Logger) {
     if (history.length === 0) {
       return this.defaultValue;
@@ -95,6 +100,7 @@ export default class InverterMetricsHistory {
     for (let i = 1; i < history.length; i++) {
       const current = history[i];
       results.push({
+        timestamp: current.timestamp,
         generationWatts: current.generationWatts * k + results[i - 1].generationWatts * (1 - k),
         exportedWatts: current.exportedWatts * k + results[i - 1].exportedWatts * (1 - k),
         batteryPercentage: current.batteryPercentage * k + results[i - 1].batteryPercentage * (1 - k),
@@ -120,6 +126,7 @@ export default class InverterMetricsHistory {
       metrics,
       (a, b) => {
         return {
+          timestamp: a.timestamp > b.timestamp ? a.timestamp : b.timestamp,
           batteryPercentage: a.batteryPercentage + b.batteryPercentage,
           batteryPowerWatts: a.batteryPowerWatts + b.batteryPowerWatts,
           exportedWatts: a.exportedWatts + b.exportedWatts,
@@ -135,6 +142,7 @@ export default class InverterMetricsHistory {
   private static average(metrics: InverterMetrics[]): InverterMetrics {
     const summedResults = this.sum(metrics);
     return {
+      timestamp: summedResults.timestamp,
       batteryPercentage: summedResults.batteryPercentage / metrics.length,
       batteryPowerWatts: summedResults.batteryPowerWatts / metrics.length,
       exportedWatts: summedResults.exportedWatts / metrics.length,
