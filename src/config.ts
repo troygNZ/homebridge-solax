@@ -27,6 +27,7 @@ export class ConfigHelper {
     log.info(`Value Strategy: ${config.valueStrategy}`);
     log.info(`Moving Average History Samples Length: ${config.movingAverageHistoryLength}`);
   }
+
   static applyDefaults(config: PlatformConfig, log: Logger): Config {
     const maybeValueStrategy: ValueStrategy | undefined = (ValueStrategy as any)[config.valueStrategy];
     if (maybeValueStrategy === undefined && config.valueStrategy !== undefined) {

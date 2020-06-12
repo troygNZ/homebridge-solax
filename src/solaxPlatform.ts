@@ -41,7 +41,8 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     const diffSeconds = (now.getTime() - latestRaw.timestamp.getTime()) / 1000;
     if (this.config.pollingFrequencySeconds * 4 < diffSeconds) {
       this.log.warn(
-        `Detected data hasn't been updated for ${diffSeconds} seconds. Where the polling frequency is ${this.config.pollingFrequencySeconds} seconds. Kicking it in the guts!`
+        `Detected data hasn't been updated for ${diffSeconds} seconds.
+         Where the polling frequency is ${this.config.pollingFrequencySeconds} seconds. Kicking it in the guts!`
       );
       await this.getLatestReadingsPeriodically();
     }
