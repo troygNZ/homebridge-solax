@@ -58,7 +58,7 @@ export class SolaxPlatform implements StaticPlatformPlugin {
     }
 
     this.log.debug(`Delaying for ${this.config.pollingFrequencySeconds} seconds.`);
-    //this.sleep(this.config.pollingFrequencySeconds * 1000).then(async () => await this.getLatestReadingsPeriodically());
+    this.sleep(this.config.pollingFrequencySeconds * 1000).then(async () => await this.getLatestReadingsPeriodically());
   }
 
   /*
