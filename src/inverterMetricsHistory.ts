@@ -34,7 +34,6 @@ export default class InverterMetricsHistory {
     this.addedRecordCount++;
 
     this.inverterStateHistory.push(metrics);
-    this.log.info(`Added new metrics. PowerGenWatts=${metrics.generationWatts} ExportedWatts=${metrics.exportedWatts}`);
     while (this.inverterStateHistory.length > this.movingAverageHistoryLength) {
       this.inverterStateHistory.shift();
     }
@@ -81,10 +80,10 @@ export default class InverterMetricsHistory {
     }
     const results = this.average(history);
     if (results.generationWatts !== 0) {
-      log.info(`Gen Watts Avg      = ${Math.round(results.generationWatts)}`);
+      log.debug(`Gen Watts Avg      = ${Math.round(results.generationWatts)}`);
     }
     if (results.exportedWatts !== 0) {
-      log.info(`Exported Watts Avg = ${Math.round(results.exportedWatts)}`);
+      log.debug(`Exported Watts Avg = ${Math.round(results.exportedWatts)}`);
     }
     return results;
   }
@@ -113,10 +112,10 @@ export default class InverterMetricsHistory {
     const lastItem = results[results.length - 1];
     const smaResult = this.average(history);
     if (lastItem.generationWatts !== 0 || smaResult.generationWatts !== 0) {
-      log.info(`Gen Watts EMA      = ${Math.round(lastItem.generationWatts)} (SMA = ${Math.round(smaResult.generationWatts)})`);
+      log.debug(`Gen Watts EMA      = ${Math.round(lastItem.generationWatts)} (SMA = ${Math.round(smaResult.generationWatts)})`);
     }
     if (lastItem.exportedWatts !== 0 || smaResult.exportedWatts !== 0) {
-      log.info(`Exported Watts EMA = ${Math.round(lastItem.exportedWatts)} (SMA = ${Math.round(smaResult.exportedWatts)})`);
+      log.debug(`Exported Watts EMA = ${Math.round(lastItem.exportedWatts)} (SMA = ${Math.round(smaResult.exportedWatts)})`);
     }
     return lastItem;
   }
