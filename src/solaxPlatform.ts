@@ -84,7 +84,23 @@ Where the polling frequency is ${this.config.pollingFrequencySeconds} seconds. K
       }),
     ];
 
-    let battery = null;
+    const rawAccessories: AccessoryPlugin[] = this.config.exposeRawMetrics
+      ? [
+          new WattsReadingAccessory(this.api.hap, this.log, "Exported Watts Raw", this.inverterStateEmitter, () => {
+            const result = this.history.getLatestRawValues().exportedWatts;
+            return result >= 0 ? result : 0;
+          }),
+          new WattsReadingAccessory(this.api.hap, this.log, "Imported Watts Raw", this.inverterStateEmitter, () => {
+            const result = this.history.getLatestRawValues().exportedWatts;
+            return result < 0 ? Math.abs(result) : 0;
+          }),
+          new WattsReadingAccessory(this.api.hap, this.log, "Power Gen Watts Raw", this.inverterStateEmitter, () => {
+            return this.history.getLatestRawValues().generationWatts;
+          }),
+        ]
+      : [];
+
+    let battery: SolarBattery | null = null;
     if (this.config.hasBattery) {
       const getDetails = () => {
         const result = this.history.getFilteredValues();
@@ -128,6 +144,7 @@ Where the polling frequency is ${this.config.pollingFrequencySeconds} seconds. K
         .concat(exportAlarms)
         .concat(battery === null ? [] : battery)
         .concat(inverterStrings)
+        .concat(rawAccessories)
     );
   }
 }

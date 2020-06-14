@@ -59,6 +59,13 @@
         "required": false,
         "default": true
       },
+      "exposeRawMetrics": {
+        "title": "Show Accessories for the RAW values",
+        "type": "boolean",
+        "required": false,
+        "default": true,
+        "desciption": "If set to true, 3 accessories will be exposed to provide the raw value feed (no averaging based filtering)."
+      },
       "valueStrategy": {
         "title": "The value strategy to apply",
         "type": "string",
