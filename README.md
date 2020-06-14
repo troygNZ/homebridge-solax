@@ -57,6 +57,8 @@ npm install homebridge-solax
 
 **valueStrategy**: _Optional_: Defaults to SimpleMovingAverage. LatestReading = use the latest values at each polling period, SimpleMovingAverage for providing some smoothing of values, to handle scenarios like sporadic cloud/sun moments. Averages over the entire history. ExpoentialMovingAverage = Use standard Exponential Moving Average calculation to provide a smoothed last value. Refer to movingAverageHistoryLength for Moving Average based history tuning.
 
+**exposeRawMetrics**: _Optional_: Defaults to true. 3 additional accessories will be exposed to provide the raw value feed (no averaging based filtering).
+
 ### Leveraging in Automations via Motion Sensor Accessories
 
 You can then create Automations in HomeKit as a result of the motion detection events (or them ceasing to happen).

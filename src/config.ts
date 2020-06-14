@@ -9,6 +9,7 @@ export default interface Config {
   hasBattery: boolean;
   showStrings: boolean;
   valueStrategy: ValueStrategy;
+  exposeRawMetrics: boolean;
 }
 
 export enum ValueStrategy {
@@ -23,6 +24,7 @@ export class ConfigHelper {
     log.info(`Polling Freq in Seconds: ${config.pollingFrequencySeconds}`);
     log.info(`Export Alert Thresholds: [${config.exportAlertThresholds.join(",")}]`);
     log.info(`Battery: ${config.hasBattery}`);
+    log.info(`Expose Raw Metrics: ${config.exposeRawMetrics}`);
     log.info(`Show Strings: ${config.showStrings}`);
     log.info(`Value Strategy: ${config.valueStrategy}`);
     log.info(`Moving Average History Samples Length: ${config.movingAverageHistoryLength}`);
@@ -41,6 +43,7 @@ export class ConfigHelper {
       address: config.address,
       hasBattery: config.hasBattery === undefined ? true : config.hasBattery,
       showStrings: config.showStrings === undefined ? true : config.showStrings,
+      exposeRawMetrics: config.exposeRawMetrics === undefined ? true : config.exposeRawMetrics,
       movingAverageHistoryLength: config.movingAverageHistoryLength === undefined ? 10 : config.movingAverageHistoryLength,
       pollingFrequencySeconds: config.pollingFrequencySeconds === undefined ? 60 : config.pollingFrequencySeconds,
       exportAlertThresholds: config.exportAlertThresholds === null ? [] : config.exportAlertThresholds,
