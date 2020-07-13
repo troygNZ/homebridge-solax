@@ -45,9 +45,9 @@ npm install homebridge-solax
 
 **address**: The base hostname of your inverter connection dongle
 
-**pollingFrequencySeconds**: _Optional_: Specifies how often to poll the Solax Inverter, and issue updates to HomeKit.
+**pollingFrequencySeconds**: _Optional_: Specifies how often to poll the Solax Inverter, and issue updates to HomeKit. Defaults to 60 seconds.
 
-**movingAverageHistoryLength**: _Optional_: Specifies the number of samples to keep when using Averaging over time based value strategies. See valueStrategy
+**movingAverageHistoryLength**: _Optional_: Specifies the number of samples to keep when using Averaging over time based value strategies. Defaults to 10 entries. See valueStrategy field for details on how this is used.
 
 **exportAlertThresholds**: _Optional_: Array of integers specifying the thresholds to create Alerts for. This will activate a motion trigger when the power export matches or exceeds the threshold value. Example: [-1000, 500, 2000] will create three motion sensors - "1000 watts imported", "500 watts exported" and "2000 watts exported".
 

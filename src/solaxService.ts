@@ -22,7 +22,7 @@ enum LiveDatastreamFields {
   BatteryCurrent = 15,
   BatteryPower = 16,
   BatteryTemp = 17,
-  BatteryCapacity = 19,
+  BatteryCapacity = 18,
   SolarTotal2 = 20,
   EnergyToGrid = 42,
   EnergyFromGrid = 43,
@@ -39,6 +39,9 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
     const response = await fetch(`${config.address}/api/realTimeData.htm`, { timeout: config.pollingFrequencySeconds * 1000 });
     if (response.ok) {
       const bodyText = await response.text();
+      // Test string with battery data. Where 67 = battery percentage, and 2259 figure is the current watts going into the battery.
+      //const bodyText =
+      //  '{"method":"uploadsn","version":"Solax_SI_CH_2nd_20160912_DE02","type":"AL_SE","SN":"serialnumber","Data":[6.1,6.4,212.0,178.9,0.9,245.6,97,37,2.2,8319.2,-48,1293,1144,54.78,41.19,2259,26,67,0.0,2823.5,,,,,,,,,,,,,,,,,,,,,,0.00,0.00,,,,,,,,50.03,,,0.0,0.0,0,0.00,0,0,0,0.00,0,9,0,0,0.00,0,9],"Status":"2"}';
       const cleansedResponse = bodyText.replace(/,,/g, ",0,").replace(/,,/g, ",0,");
       const json = JSON.parse(cleansedResponse);
       let genPower: number | null = null;
@@ -50,6 +53,7 @@ export const getValuesAsync = async (log: Logger, config: Config): Promise<Inver
 
       _.each(json.Data, (dataItem, index: number) => {
         // Lookup index data provided starts at 1 :|
+        //log.debug(`${index + 1} - dataItem`);
         const lookupIndex = index + 1;
         if (lookupIndex === (LiveDatastreamFields.GridPower as number)) {
           genPower = parseInt(dataItem);
