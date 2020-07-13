@@ -64,3 +64,5 @@ npm install homebridge-solax
 You can then create Automations in HomeKit as a result of the motion detection events (or them ceasing to happen).
 Example: If 2000 watts or more is being exported, and heatpump isn't already cranked, then bump the temperature up.
 I personally use Home+, as it allows for smarter controlling of devices. E.g. See below
+![Solar Excess Automation](IMG_1026.PNG)
+![Solar Insufficient Automation](IMG_1027.PNG)
