@@ -8,7 +8,6 @@ export interface BatteryDetails {
 export default class SolarBattery implements AccessoryPlugin {
   private readonly service: Service;
   private readonly informationService: Service;
-  private previousWatts: number | null;
 
   constructor(
     private readonly hap: HAP,
@@ -19,7 +18,6 @@ export default class SolarBattery implements AccessoryPlugin {
   ) {
     this.service = new hap.Service.BatteryService(name);
     this.service.name = name;
-    this.previousWatts = null;
     // create handlers for required characteristics
     this.service.getCharacteristic(hap.Characteristic.BatteryLevel).on("get", this.handleBatteryLevelGet.bind(this));
     this.service.getCharacteristic(hap.Characteristic.ChargingState).on("get", this.handleChargingStateGet.bind(this));
@@ -40,13 +38,13 @@ export default class SolarBattery implements AccessoryPlugin {
 
   handleBatteryLevelGet = (callback: any): void => {
     const result = this.getBatteryValues().batteryPercentage;
-    this.log.info(`GET for batteryLevel returned: ${result}`);
+    this.log.debug(`GET for batteryLevel returned: ${result}`);
     callback(null, result);
   };
 
   handleChargingStateGet = (callback: any): void => {
     const result = this.determineChargingState(this.getBatteryValues());
-    this.log.info(`GET for handleChargingStateGet returned: ${result}`);
+    this.log.debug(`GET for handleChargingStateGet returned: ${result}`);
     callback(null, result);
   };
 
@@ -55,9 +53,7 @@ export default class SolarBattery implements AccessoryPlugin {
   };
 
   determineChargingState = (batteryValues: BatteryDetails): number => {
-    const currentWatts = batteryValues.batteryWatts;
-    const result = this.previousWatts === null || currentWatts > this.previousWatts ? 1 : 0;
-    this.previousWatts = currentWatts;
+    const result = batteryValues.batteryWatts > 0 ? 1 : 0;
     return result;
   };
 

@@ -18,7 +18,7 @@ export default class WattsReadingAccessory implements AccessoryPlugin {
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         // Minimum value allowed for light sensor is 0.1
         const sanitisedValue = Math.max(0.1, getValue());
-        log.info(`GET for ${name} returned: ${sanitisedValue}`);
+        log.debug(`GET for ${name} returned: ${sanitisedValue}`);
         callback(undefined, sanitisedValue);
       });
 

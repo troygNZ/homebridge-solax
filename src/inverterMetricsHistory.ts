@@ -39,12 +39,12 @@ export default class InverterMetricsHistory {
     }
 
     if (this.addedRecordCount % Math.round(this.movingAverageHistoryLength / 2) === 0) {
-      this.log.info(
+      this.log.debug(
         `Generation Watts Raw History: [${_.chain(this.inverterStateHistory)
           .map((x) => x.generationWatts)
           .join(InverterMetricsHistory.joint)}]`
       );
-      this.log.info(
+      this.log.debug(
         `Exported Watts Raw History:   [${_.chain(this.inverterStateHistory)
           .map((x) => x.exportedWatts)
           .join(InverterMetricsHistory.joint)}]`
