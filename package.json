@@ -2,7 +2,7 @@
   "private": false,
   "displayName": "Homebridge - Solax Solar Inverter Plugin",
   "name": "homebridge-solax",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "A Solax connector that (crudely) exposes readonly metrics as Light Sensors for power generation, import, export, individual string generation, and (experimental) battery metrics. Due to the constraints around HomeKit's support for power inverters, this seemed the best fit. Also has configurable alerts, giving the ability to automate actions as a result of excess power generation, or limited power generation.",
   "license": "Apache-2.0",
   "repository": {
