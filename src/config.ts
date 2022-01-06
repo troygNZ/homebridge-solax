@@ -46,7 +46,7 @@ export class ConfigHelper {
       exposeRawMetrics: config.exposeRawMetrics === undefined ? true : config.exposeRawMetrics,
       movingAverageHistoryLength: config.movingAverageHistoryLength === undefined ? 10 : config.movingAverageHistoryLength,
       pollingFrequencySeconds: config.pollingFrequencySeconds === undefined ? 60 : config.pollingFrequencySeconds,
-      exportAlertThresholds: config.exportAlertThresholds === null ? [] : config.exportAlertThresholds,
+      exportAlertThresholds: config.exportAlertThresholds === undefined ? [] : config.exportAlertThresholds,
       valueStrategy: maybeValueStrategy === undefined ? ValueStrategy.SimpleMovingAverage : maybeValueStrategy,
     };
   }
