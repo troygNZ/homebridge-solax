@@ -15,7 +15,6 @@
         "title": "Inverter Address",
         "type": "string",
         "required": true,
-        "format": "hostname",
         "default": ""
       },
 
