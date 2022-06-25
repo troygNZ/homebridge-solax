@@ -30,7 +30,7 @@
     "@types/lodash": "^4.14.151",
     "@types/node-fetch": "^2.5.7",
     "lodash": "^4.17.21",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.7"
   },
   "devDependencies": {
     "@types/node": "^13.13.6",
